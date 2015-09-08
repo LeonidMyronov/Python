@@ -1,0 +1,98 @@
+
+#################################################
+# Student adds code where appropriate    
+
+import simplegui
+
+# define globals
+TILE_WIDTH = 50
+TILE_HEIGHT = 100
+
+# definition of a Tile class
+class Tile:
+    
+    # definition of intializer
+    def __init__(self, num, exp, pos):
+        self.number = num
+        self.exposed = exp
+        self.tile_pos = pos
+        self.tile_center = pos[0]+TILE_WIDTH/2, pos[1]/2
+        self.tile_domain = [pos, 
+        [pos[0]+TILE_WIDTH, pos[1]],
+        [pos[0]+TILE_WIDTH, pos[1]-TILE_HEIGHT],
+        [pos[0], pos[1]-TILE_HEIGHT]]
+
+       
+    # definition of getter for number
+    def get_number(self):
+        return self.number
+    
+    # check whether tile is exposed
+    def is_exposed(self):
+        return self.exposed
+    
+    # expose the tile
+    def expose_tile(self):
+        self.exposed = True
+    
+    # hide the tile       
+    def hide_tile(self):
+        self.exposed = False
+        
+    # string method for tiles    
+    def __str__(self):
+        return "Number is " + str(self.number) + ", exposed is " + str(self.exposed)+', Domain is '+str(self.tile_domain)    
+
+    # draw method for tiles
+    def draw_tile(self, canvas):
+        if self.exposed == True:
+            canvas.draw_polygon(self.tile_domain, 2, 'blue', 'white')
+            canvas.draw_text(str(self.number), self.tile_center, 10, 'black')
+        else:
+            canvas.draw_polygon(self.tile_domain, 2, 'black', 'green')
+
+    # is_selected for the tile
+    def is_selected(self, pos):
+        if pos [0] >= self.tile_domain[0][0] and pos[0] <= self.tile_domain[1][0] and pos[1] <= self.tile_domain[0][1] and pos[1] >= self.tile_domain[3][1]:
+            return True
+        else:
+            return False
+        
+        
+    
+# draw handler
+def draw(canvas):
+    for tile in tile_list:
+        tile.draw_tile(canvas)
+    
+
+def click(pos):
+    for tile in tile_list:
+        if tile.is_selected(pos):
+            if tile.is_exposed():
+                tile.hide_tile()
+            else:
+                tile.expose_tile()
+    
+    
+# create frame and add a button and labels
+frame = simplegui.create_frame("Memory", 3 * TILE_WIDTH, TILE_HEIGHT)
+frame.set_draw_handler(draw)
+frame.set_mouseclick_handler(click)
+
+# create two tiles.make sure to update initializer  
+tile_list = []
+tile1 = Tile(3, True, [0, TILE_HEIGHT])
+tile2 = Tile(5, False, [TILE_WIDTH, TILE_HEIGHT])
+tile3 = Tile(6, True, [2*TILE_WIDTH, TILE_HEIGHT])
+
+tile_list.append(tile1)
+tile_list.append(tile2)
+tile_list.append(tile3)
+
+#print tile1
+#print tile2
+
+# get things rolling
+frame.start()
+    
