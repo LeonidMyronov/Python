@@ -11,7 +11,7 @@ TILE_WIDTH = 50
 TILE_HEIGHT = 100
 DISTINCT_TILES = 8
 
-sound = simplegui.load_sound('http://www.wavsource.com/snds_2015-09-06_6378095460179137/sfx/applause_y.wav')
+sound = simplegui.load_sound('http://www.wavsource.com/snds_2015-09-06_6378095460179137/sfx/chime_up.wav')
 sound.set_volume(0.7)
 
 win_sound = simplegui.load_sound('http://www.wavsource.com/snds_2015-09-06_6378095460179137/sfx/cheering.wav')
