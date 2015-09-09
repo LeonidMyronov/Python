@@ -1,3 +1,13 @@
+'''
+Challenge: To complete our implementation of the Tile class, 
+we must determine whether a tile has been clicked. 
+In our week five implementation of Memory, this computation was done in the draw handler. 
+For our object-oriented version, we will implement a method is_selected for the Tile class 
+that returns True if a tile contains a specified point. 
+To determine if a tile has been clicked, the mouse handler will then simply call is_selected 
+using the position of the mouse. Again, this design moves the determination of whether a point lies 
+on a tile out of the mouse handler into the Tile class, reducing the complexity of the mouse handler.
+'''
 #################################################
 # Student adds code where appropriate    
 
