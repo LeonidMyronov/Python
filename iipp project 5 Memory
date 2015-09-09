@@ -1,0 +1,174 @@
+# implementation of card game - Memory
+
+import simplegui
+import random
+
+images1 = ['http://forex-markets.ru/usd/usd-10.jpg',
+         'http://forex-markets.ru/usd/usd-20.jpg',
+         'http://forex-markets.ru/usd/usd-5.jpg',
+         'http://forex-markets.ru/usd/usd-50.jpg',
+         'http://forex-markets.ru/usd/usd-500.jpg',
+         'http://forex-markets.ru/usd/usd-100.jpg',
+         'http://forex-markets.ru/usd/usd-2.jpg',
+         'http://forex-markets.ru/usd/usd-1.jpg']*2
+images2 = ['http://www.global-b2b-network.com/direct/dbimage/50149138/Electronic_Toy_Car.jpg',
+           'http://www.global-b2b-network.com/direct/dbimage/50149130/Hurricane_Motorcycle.jpg',
+           'http://www.global-b2b-network.com/direct/dbimage/50273266/Motor__Car.jpg',
+           'http://www.global-b2b-network.com/direct/dbimage/50000672/Children_Ride_On_Car.jpg',
+           'http://www.global-b2b-network.com/direct/dbimage/50149134/Mini_Prince_Motorcycle.jpg',
+           'http://www.global-b2b-network.com/direct/dbimage/50273242/Motor__Car.jpg',
+           'http://www.global-b2b-network.com/direct/dbimage/50149143/Electric_Sand_Kart.jpg',
+           'http://www.global-b2b-network.com/direct/dbimage/50273230/Jeep_Car.jpg']*2
+images3 = ['http://commonsensehealth.com/wp-content/uploads/2013/07/grapes-150x150.jpg',
+           'http://commonsensehealth.com/wp-content/uploads/2013/07/papaya-150x150.jpg',
+           'http://commonsensehealth.com/wp-content/uploads/2013/07/kiwi-150x150.jpg',
+           'http://commonsensehealth.com/wp-content/uploads/2013/07/cherries-150x150.jpg',
+           'http://commonsensehealth.com/wp-content/uploads/2013/07/berries-150x150.jpg',
+           'http://commonsensehealth.com/wp-content/uploads/2013/07/banana-150x150.jpg',
+           'http://commonsensehealth.com/wp-content/uploads/2013/07/apricot-150x150.jpg',
+           'http://commonsensehealth.com/wp-content/uploads/2013/07/apples-150x150.jpg']*2
+
+list_images = [images1, images2, images3]
+list_number = 0
+set_images = {}
+EDGE_POINTS = [(0,5),(845,5),(845, 405), (5, 405), (5, 5)]
+LINE_POINTS = [(215,0), (215, 410), (425,0), (425, 410), (635,0), (635, 410),
+              (0, 105), (845, 105), (0, 205), (845, 205), (0, 305), (845, 305)]
+#image_size = 600, 250
+#image_size = 150, 150
+CANVAS_IMAGE_SIZE = 200, 90
+descr1 = "Card game Memory"
+descr2 = "Memory is a card game in which the player deals out a set of cards face down. A turn consists of the player flipping over two cards. If they match, the player leaves them face up, otherwise the cards backed face down. The goal is to end up with all of the cards flipped face up in the minimum number of turns."
+printer = ""
+ii = 0
+#dictionary:
+#    key: 0 - 15
+#
+#	values:
+#		0 image
+#    	1 image_size
+#       2 image_center
+#		3 image_url
+#		4 canvas_image_center
+#		5 canvas_image_size
+#       6 exposed: True/False
+
+
+def convert_mouse_points_to_dict_index(pos):
+    return pos[0]/210+pos[1]/100*4    
+
+# helper function to initialize globals
+def new_game():
+    global state, turn, pair, win, image_size, list_number
+    state = 0
+    turn = 0
+    win = False
+    label.set_text("Turns = "+str(turn))
+    pair = []
+#    number = random.randrange(len(list_images))
+#    images = list_images[number][:]
+    images = list_images[list_number][:]
+    
+#    image_size = 360, 360
+    if list_number == 0:
+        image_size = 600, 250
+    elif list_number == 2:
+        image_size = 150, 150
+    elif list_number == 1:
+         image_size = 360, 360
+    for i in range(len(images)):
+        number = random.randrange(len(images))
+        image_url = images[number]
+        image = simplegui.load_image(images.pop(number))
+        #image_size = image.get_width(), image.get_height()
+        image_center = image_size[0]/2,image_size[1]/2
+        canvas_image_center = (110 + 210*i)%840, 55+100*(i/4)
+        set_images [i] = [image, image_center, image_size, image_url, canvas_image_center, CANVAS_IMAGE_SIZE, False]
+    
+    list_number = (list_number+1)%3
+    
+    #print set_images
+    pass  
+
+     
+# define event handlers
+def mouseclick(pos):
+    # add game state logic here
+    
+    global state, turn, pair, win
+         
+    index = convert_mouse_points_to_dict_index(pos)
+    #print index
+    if set_images[index][6] == True:
+        return
+    
+    if state == 0:
+        state = 1
+    elif state == 1:
+        state = 2
+        turn += 1
+        label.set_text("Turns = "+str(turn))
+    else:
+        if set_images[pair[0]][3] != set_images[pair[1]][3]:
+            for item in pair:
+                set_images[item][6] = False
+                #print item, set_images[item][6]
+        pair = []
+        state = 1
+    
+    
+    if state <= 2:
+        set_images[index][6] = True
+        pair.append(index)
+    
+    for i in range(len(set_images)):
+        if set_images[i][6] == False:
+            return
+        
+    win = True
+            
+    #print 'state =', state, 'pair indexies = ', pair
+    
+def timer_handler():
+    global ii, printer
+    printer = printer+descr2[ii]
+    ii+=1
+    l2.set_text(printer)
+    if ii == len(descr2):
+        timer.stop()
+    
+# cards are logically 50x100 pixels in size    
+def draw(canvas):
+    canvas.draw_polyline(EDGE_POINTS, 10, 'green')
+    for i in range(0, len(LINE_POINTS), 2):
+        canvas.draw_line(LINE_POINTS[i], LINE_POINTS[i+1], 10, 'green')
+    for i in range(len(set_images)):
+        if set_images[i][6] == True:
+            canvas.draw_image(set_images[i][0],set_images[i][1], set_images[i][2], set_images[i][4], set_images[i][5])
+    if win:
+        canvas.draw_text("Congratulations!", (100,230), 100, 'blue')
+    pass
+
+
+# create frame and add a button and labels
+frame = simplegui.create_frame("Memory", 850, 410)
+frame.add_button("Reset", new_game)
+l = frame.add_label("")
+label = frame.add_label("Turns = 0")
+l = frame.add_label("")
+l1 = frame.add_label(descr1)
+l = frame.add_label("")
+l2 = frame.add_label(descr2)
+l = frame.add_label("")
+l = frame.add_label("___ Leo Myronov ___")
+# register event handlers
+frame.set_mouseclick_handler(mouseclick)
+frame.set_draw_handler(draw)
+timer = simplegui.create_timer(50, timer_handler)
+
+# get things rolling
+new_game()
+frame.start()
+timer.start()
+
+# Always remember to review the grading rubric
