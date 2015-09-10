@@ -1,0 +1,197 @@
+# Final version of Memory using the Tile class
+
+#################################################
+# Student adds code where appropriate    
+
+import simplegui
+import random
+
+# define globals
+TILE_WIDTH = 70
+TILE_HEIGHT = 100
+DISTINCT_TILES = 8
+cards_url = 'https://www.dropbox.com/s/r3nk7jj6rc75qf9/Cards.png?dl=1'
+cards_image = simplegui.load_image(cards_url)
+
+card_image_size = 98.46, 143
+card_image_center = card_image_size[0]/2, card_image_size[1]/2
+cards_image_size = 1280, 715
+cards_image_center = cards_image_size[0]/2, cards_image_size[1]/2
+
+back_card_image_center = card_image_size[0]*2+card_image_center[0], card_image_size[1]*4+card_image_center[1]
+
+sound = simplegui.load_sound('http://www.wavsource.com/snds_2015-09-06_6378095460179137/sfx/chime_up.wav')
+sound.set_volume(0.7)
+
+win_sound = simplegui.load_sound('http://www.wavsource.com/snds_2015-09-06_6378095460179137/sfx/cheering.wav')
+
+cards_value = ['A', '2', '3', '4','5','6','7','8','9','10','J','Q','K']
+cards_suit = ['Clubs', 'Spades', 'Diamonds','Hearts']
+
+# helper function to initialize globals
+def new_game():
+    global my_tiles, state, turns
+    
+    my_deck = Deck()
+    my_tiles = []
+    for i in range(DISTINCT_TILES):
+        my_tiles.append(my_deck.get_card())
+        #print my_tiles[i]
+    #print ' '    
+    my_tiles.extend(my_tiles)
+    
+    #for i in my_tiles:
+    #    print i
+    
+    for i in range(DISTINCT_TILES*2):
+        my_tiles[i].update_location((i*TILE_WIDTH+TILE_WIDTH/2, TILE_HEIGHT/2))
+        print my_tiles[i]
+        
+    state = 0
+    turns = 0
+    label.set_text("Turns = "+str(turns))  
+
+# definition of a Tile class
+class Deck:
+    
+    def __init__(self):
+        self.cards_deck = []
+        for i in cards_suit:
+            for j in cards_value:
+                loc = (0,0)
+                x = cards_value.index(j)*card_image_size[0]+card_image_center[0]
+                y = cards_suit.index(i)*card_image_size[1]+card_image_center[1]
+                image_center = x,y
+                self.cards_deck.append(Tile(False,loc,i,j,image_center))
+        
+        
+    def get_card(self):
+        return self.cards_deck.pop(random.randrange(len(self.cards_deck)))
+
+    def get_amount_in_deck(self):
+        return len(self.cards_deck)
+        
+
+# definition of a Tile class
+class Tile:
+    
+    # definition of intializer
+    def __init__(self, exp, loc, suit, value, image_center):
+        #self.number = num
+        self.exposed = exp
+        self.location = loc #center
+        self.value = value
+        self.suit = suit
+        self.image_center = image_center
+        
+    # definition of getter for number
+    def get_value(self):
+        return self.value
+    
+    def get_suit(self):
+        return self.suit
+    
+    # check whether tile is exposed
+    def is_exposed(self):
+        return self.exposed
+    
+    # expose the tile
+    def expose_tile(self):
+        self.exposed = True
+    
+    # hide the tile       
+    def hide_tile(self):
+        self.exposed = False
+        
+    # string method for tiles    
+    def __str__(self):
+        return str(self.suit)+' '+str(self.value)+", exposed is " + str(self.exposed)+', image center='+str(self.image_center)+', canavs pos='+str(self.location)    
+
+    # draw method for tiles
+    def draw_tile(self, canvas):
+        loc = self.location
+        if self.exposed:
+            #text_location = [loc[0] + 0.2 * TILE_WIDTH, loc[1] - 0.3 * TILE_HEIGHT]
+            #canvas.draw_text(str(self.number), text_location, TILE_WIDTH, "White")
+            canvas.draw_image(cards_image, self.image_center, card_image_size, self.location, (TILE_WIDTH, TILE_HEIGHT))
+        else:
+            #tile_corners = (loc, [loc[0] + TILE_WIDTH, loc[1]], [loc[0] + TILE_WIDTH, loc[1] - TILE_HEIGHT], [loc[0], loc[1] - TILE_HEIGHT])
+            #canvas.draw_polygon(tile_corners, 1, "Red", "Green")
+            canvas.draw_image(cards_image, back_card_image_center, card_image_size, loc, (TILE_WIDTH, TILE_HEIGHT))
+
+    # selection method for tiles
+    def is_selected(self, pos):
+        inside_hor = self.location[0] - TILE_WIDTH/2 <= pos[0] < self.location[0] +  TILE_WIDTH/2
+        inside_vert = self.location[1] -  TILE_HEIGHT/2 <= pos[1] <= self.location[1] +  TILE_HEIGHT/2
+        return  inside_hor and inside_vert     
+        
+    def update_location(self, pos):
+        self.location = pos
+        
+    def is_equal(self, card):
+        return self.value == card.get_value() and self.suit == card.get_suit()
+
+# define event handlers
+def mouseclick(pos):
+    global state, turns, turn1_tile, turn2_tile
+    win_case = 0
+    
+    for tile in my_tiles:
+        if tile.is_selected(pos):
+            clicked_tile = tile
+        
+            
+    if clicked_tile.is_exposed():
+        return
+    
+    clicked_tile.expose_tile()
+    
+    if state == 0:
+        state = 1
+        turn1_tile = clicked_tile
+    elif state == 1:
+        state = 2
+        turn2_tile = clicked_tile
+        turns += 1
+        label.set_text("Turns = " + str(turns)) 
+        if turn1_tile.is_equal(turn2_tile):               
+#            sound.stop()
+            sound.play()
+        for tile in my_tiles:
+            if tile.is_exposed():
+                win_case += 1
+        if win_case == len(my_tiles):
+            win_sound.play()
+            
+        
+    else:
+        if not turn1_tile.is_equal(turn2_tile):               
+            turn1_tile.hide_tile()
+            turn2_tile.hide_tile()
+        
+        state = 1
+        turn1_tile = clicked_tile
+            
+# draw handler
+def draw(canvas):
+#    canvas.draw_image(cards_image, cards_image_center, cards_image_size, (DISTINCT_TILES * TILE_WIDTH, TILE_HEIGHT), (2* DISTINCT_TILES * TILE_WIDTH, 2* TILE_HEIGHT))
+    for tile in my_tiles:
+        tile.draw_tile(canvas)
+    
+                      
+                      
+# create frame and add a button and labels
+frame = simplegui.create_frame("Memory", 2 * DISTINCT_TILES * TILE_WIDTH, 2* TILE_HEIGHT)
+frame.add_button("Restart", new_game)
+label = frame.add_label("Turns = 0")
+frame.set_draw_handler(draw)
+frame.set_mouseclick_handler(mouseclick)
+
+
+# get things rolling
+new_game()
+frame.start()
+    
+    
+###################################################
+# Final version of Memory
