@@ -21,7 +21,7 @@ cards_image_center = cards_image_size[0]/2, cards_image_size[1]/2
 back_card_image_center = card_image_size[0]*2+card_image_center[0], card_image_size[1]*4+card_image_center[1]
 
 sound = simplegui.load_sound('http://www.wavsource.com/snds_2015-09-06_6378095460179137/sfx/chime_up.wav')
-sound.set_volume(0.7)
+sound.set_volume(1)
 
 win_sound = simplegui.load_sound('http://www.wavsource.com/snds_2015-09-06_6378095460179137/sfx/cheering.wav')
 
@@ -36,18 +36,24 @@ def new_game():
     my_tiles = []
     for i in range(DISTINCT_TILES):
         my_tiles.append(my_deck.get_card())
+        my_tiles.append(Tile(False,
+                             (0,0),
+                             my_tiles[-1].get_suit(),
+                             my_tiles[-1].get_value(),
+                             my_tiles[-1].get_image_location()))
         #print my_tiles[i]
     #print ' '    
-    my_tiles.extend(my_tiles)
+    #my_tiles = my_tiles+list(my_tiles)
     random.shuffle(my_tiles)
     
-    #for i in my_tiles:
-    #    print i
     
     for i in range(DISTINCT_TILES*2):
         my_tiles[i].update_location((i*TILE_WIDTH+TILE_WIDTH/2, TILE_HEIGHT/2))
-        print my_tiles[i]
         
+    
+#    for i in my_tiles:
+#        print i
+    
     state = 0
     turns = 0
     label.set_text("Turns = "+str(turns))  
@@ -59,7 +65,7 @@ class Deck:
         self.cards_deck = []
         for i in cards_suit:
             for j in cards_value:
-                loc = (0,0)
+                loc = [0,0]
                 x = cards_value.index(j)*card_image_size[0]+card_image_center[0]
                 y = cards_suit.index(i)*card_image_size[1]+card_image_center[1]
                 image_center = x,y
@@ -89,6 +95,9 @@ class Tile:
     def get_value(self):
         return self.value
     
+    def get_image_location(self):
+        return self.image_center
+    
     def get_suit(self):
         return self.suit
     
@@ -106,7 +115,7 @@ class Tile:
         
     # string method for tiles    
     def __str__(self):
-        return str(self.suit)+' '+str(self.value)+", exposed is " + str(self.exposed)+', image center='+str(self.image_center)+', canavs pos='+str(self.location)    
+        return str(self.suit)+' '+str(self.value)+", exposed is " + str(self.exposed)+', image center='+str(self.image_center)+', canvas pos='+str(self.location)    
 
     # draw method for tiles
     def draw_tile(self, canvas):
@@ -157,11 +166,13 @@ def mouseclick(pos):
         label.set_text("Turns = " + str(turns)) 
         if turn1_tile.is_equal(turn2_tile):               
 #            sound.stop()
+            print 'equal'
             sound.play()
         for tile in my_tiles:
             if tile.is_exposed():
                 win_case += 1
         if win_case == len(my_tiles):
+            print 'win'
             win_sound.play()
             
         
