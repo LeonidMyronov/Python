@@ -28,6 +28,7 @@ win_sound = simplegui.load_sound('http://www.wavsource.com/snds_2015-09-06_63780
 cards_value = ['A', '2', '3', '4','5','6','7','8','9','10','J','Q','K']
 cards_suit = ['Clubs', 'Spades', 'Diamonds','Hearts']
 
+win_sound.play()
 # helper function to initialize globals
 def new_game():
     global my_tiles, state, turns
@@ -141,15 +142,26 @@ class Tile:
     def is_equal(self, card):
         return self.value == card.get_value() and self.suit == card.get_suit()
 
+def mousedrag(pos):
+    for tile in my_tiles:
+        if tile.is_selected(pos):
+            tile.update_location(pos)
+    
 # define event handlers
 def mouseclick(pos):
     global state, turns, turn1_tile, turn2_tile
     win_case = 0
     
+    empty_space = True
+    
     for tile in my_tiles:
         if tile.is_selected(pos):
             clicked_tile = tile
-        
+            empty_space = False
+    
+    if empty_space:
+        #print 'none'
+        return
             
     if clicked_tile.is_exposed():
         return
@@ -193,11 +205,12 @@ def draw(canvas):
                       
                       
 # create frame and add a button and labels
-frame = simplegui.create_frame("Memory", 2 * DISTINCT_TILES * TILE_WIDTH, 2* TILE_HEIGHT)
+frame = simplegui.create_frame("Memory", 2 * DISTINCT_TILES * TILE_WIDTH, 4*TILE_HEIGHT)
 frame.add_button("Restart", new_game)
 label = frame.add_label("Turns = 0")
 frame.set_draw_handler(draw)
 frame.set_mouseclick_handler(mouseclick)
+frame.set_mousedrag_handler(mousedrag)
 
 
 # get things rolling
