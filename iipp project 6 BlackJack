@@ -22,6 +22,29 @@ back_card_image_center = card_image_size[0]*2+card_image_center[0], card_image_s
 sound = simplegui.load_sound('https://www.dropbox.com/s/5t63pwt6yqpqf79/cheering.wav?dl=1')
 win_sound = simplegui.load_sound('https://www.dropbox.com/s/msp7dlph5tv7ms1/laugh_x.wav?dl=1')
 
+logo_url = 'https://www.dropbox.com/s/wgv3507e1hvityl/blackjack-logo.png?dl=1'
+logo_image = simplegui.load_image(logo_url)
+logo_size = 300, 300
+logo_center = 150, 150
+logo_canvas_center = 300, 300
+logo_canvas_size = 200, 200
+
+
+dealer_url = 'https://www.dropbox.com/s/vcl7ao4w5gjcoxa/BlackJack-dealer.jpg?dl=1'
+dealer_image = simplegui.load_image(dealer_url)
+dealer_size = 175, 237
+dealer_center = 175/2, 237/2
+dealer_canvas_center = 90, 100
+dealer_canvas_size = 175/2, 237/2
+
+player_url = 'https://www.dropbox.com/s/w794fjn9yg0avqm/person-contour.jpg?dl=1'
+player_image = simplegui.load_image(player_url)
+player_size = 225, 225
+player_center = 225/2 , 225/2
+player_canvas_center = 80, 500
+player_canvas_size = 175/2, 237/2
+
+
 # define globals for cards
 cards_value = ['A', '2', '3', '4','5','6','7','8','9','10','J','Q','K']
 cards_suit = ['Clubs', 'Diamonds','Hearts', 'Spades']
@@ -238,9 +261,9 @@ class Deck:
 def deal():
     global outcome, in_play, player_hand, dealer_hand
     
-    player_hand = Hand((100, 350))
+    player_hand = Hand((200, 500))
     
-    dealer_hand = Hand((100, 150))
+    dealer_hand = Hand((200, 100))
     
 
     
@@ -310,9 +333,10 @@ def stand():
 # draw handler    
 def draw(canvas):
     # test to make sure that card.draw works, replace with your code below
-    
-    
-    
+    canvas.draw_image(logo_image, logo_center, logo_size, logo_canvas_center, logo_canvas_size)
+    canvas.draw_image(dealer_image, dealer_center, dealer_size, dealer_canvas_center, dealer_canvas_size)
+    canvas.draw_image(player_image, player_center, player_size, player_canvas_center, player_canvas_size)
+        
     player_hand.draw(canvas)
     dealer_hand.draw(canvas)
 
