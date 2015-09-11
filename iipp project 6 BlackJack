@@ -25,7 +25,7 @@ win_sound = simplegui.load_sound('https://www.dropbox.com/s/msp7dlph5tv7ms1/laug
 # define globals for cards
 cards_value = ['A', '2', '3', '4','5','6','7','8','9','10','J','Q','K']
 cards_suit = ['Clubs', 'Diamonds','Hearts', 'Spades']
-VALUES = {'A':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, 'T':10, 'J':10, 'Q':10, 'K':10}
+VALUES = {'A':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, '10':10, 'J':10, 'Q':10, 'K':10}
 
 
 # load card sprite - 936x384 - source: jfitz.com
@@ -146,17 +146,18 @@ class Hand:
     def __init__(self, loc =(200,200)):
         self.location = loc
         self.hand = []
-        
+        self.hand_value = 0
 
     # return a string representation of a hand
     def __str__(self):
-        print self.location
+#        print self.location
+#        print self.hand_value
         if len(self.hand) > 0:
             for card in self.hand:
                 print card
             return ''
         else:
-            return self.hand
+            return str(self.hand)
         
 
     # add a card object to a hand
@@ -164,17 +165,28 @@ class Hand:
         card.expose_card()
         card.update_location ((self.location[0]+len(self.hand)*TILE_WIDTH, self.location[1]))
         self.hand.append(card)
+        self.hand_value += VALUES[card.get_value()]
 
     # compute the value of the hand, see Blackjack video
     def get_value(self):
         # count aces as 1, if the hand has an ace, then add 10 to hand value if it doesn't bust
-        pass	
-   
+        if 'A' not in [card.get_value() for card in self.hand]:
+            return self.hand_value
+        elif self.hand_value + 10 <= 21:
+            return self.hand_value + 10
+        else:
+            return self.hand_value
+            
+            
     # draw a hand on the canvas, use the draw method for cards
     def draw(self, canvas):
         if len(self.hand) > 0:
             for card in self.hand:
                 card.draw(canvas)
+                
+    # get card of the hand
+    def get_card (self, index):
+        return self.hand[index]
                 
  
         
@@ -196,7 +208,7 @@ class Deck:
     def get_random_card(self):
         return self.cards_deck.pop(random.randrange(len(self.cards_deck)))
 
-    def get_amount_in_deck(self):
+    def get_amount(self):
         return len(self.cards_deck)
     
     def get_card(self):
@@ -224,58 +236,90 @@ class Deck:
 
 #define event handlers for buttons
 def deal():
-    global outcome, in_play
+    global outcome, in_play, player_hand, dealer_hand
     
+    player_hand = Hand((100, 350))
     
-#    print deck.get_amount_in_deck()
-#    print deck
-#    print ''
+    dealer_hand = Hand((100, 150))
     
-    c1 = deck.get_card()
-    c1.update_location((200,200))
-    print c1
-    c2 = deck.get_random_card()
-    print c2
+
     
-    player_hand.add_card(c1)
-    player_hand.add_card(c2)
+    player_hand.add_card(deck.get_card())
     
-    print player_hand
-#    print deck.get_amount_in_deck()
-#    print ''
-#    deck.shuffle()
+    player_hand.add_card(deck.get_card())
     
-#    print deck
-    # your code goes here
+    dealer_hand.add_card(deck.get_card())
+    dealer_card1 = dealer_hand.get_card(0)
+    dealer_card1.hide_card()
+    dealer_hand.add_card(deck.get_card())
     
+    print 'Player value = ', player_hand.get_value()
     in_play = True
 
 def hit():
-    pass	# replace with your code below
- 
+    
+    global outcome, in_play, deck
+    
+    if deck.get_amount() < 10:
+        
+        print 'In deck', deck.get_amount(), 'cards'
+        deck = Deck()
+        deck.shuffle()
+        print 'In deck', deck.get_amount(), 'cards'
     # if the hand is in play, hit the player
-   
+    
+    
+    player_hand.add_card(deck.get_card())
+        
+        
+    if player_hand.get_value() < 21:    
+        print 'Player Hit. Values =', player_hand.get_value()
+        
     # if busted, assign a message to outcome, update in_play and score
+    else:
+        in_play = False
+        outcome = 'Player lost'
+        print outcome
+        win_sound.play()
+        return
+    
+   
+
+    
        
 def stand():
-    pass	# replace with your code below
-   
+    
     # if hand is in play, repeatedly hit dealer until his hand has value 17 or more
-
+    dealer_card1 = dealer_hand.get_card(0)
+    dealer_card1.expose_card()
+    while dealer_hand.get_value() < player_hand.get_value():
+        dealer_hand.add_card(deck.get_card())
+    
+    print 'Dealer value = ', dealer_hand.get_value()
     # assign a message to outcome, update in_play and score
+    if dealer_hand.get_value() > 21:
+        outcome = 'Dealer lost'
+        print outcome
+        sound.play()
+        
+    else:
+        outcome = 'Dealer Win'
+        print outcome
+        win_sound.play()
 
 # draw handler    
 def draw(canvas):
     # test to make sure that card.draw works, replace with your code below
     
     
-    card.draw(canvas)
+    
     player_hand.draw(canvas)
+    dealer_hand.draw(canvas)
 
 
 # define event handlers
 def mouseclick(pos):
-    
+    return
     empty_space = True
     
     if card.is_selected(pos):
@@ -292,10 +336,9 @@ frame.add_button("Hit",  hit, 200)
 frame.add_button("Stand", stand, 200)
 frame.set_draw_handler(draw)
 frame.set_mouseclick_handler(mouseclick)
-card = Card("Spades", "A")
-card.update_location([200, 200])
+
 deck = Deck()
-player_hand = Hand((200, 350))
+deck.shuffle()
 # get things rolling
 deal()
 frame.start()
