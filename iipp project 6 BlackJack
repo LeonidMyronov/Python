@@ -37,11 +37,11 @@ dealer_center = 175/2, 237/2
 dealer_canvas_center = 90, 100
 dealer_canvas_size = 175/2, 237/2
 
-player_url = 'https://www.dropbox.com/s/w794fjn9yg0avqm/person-contour.jpg?dl=1'
+player_url = 'https://www.dropbox.com/s/e09g93d73ugcsu6/card-gamer.jpg?dl=1'
 player_image = simplegui.load_image(player_url)
-player_size = 225, 225
-player_center = 225/2 , 225/2
-player_canvas_center = 80, 500
+player_size = 183, 275
+player_center = 183/2 , 275/2
+player_canvas_center = 90, 500
 player_canvas_size = 175/2, 237/2
 
 chips_url = 'https://www.dropbox.com/s/5dkx37jwu22e1tv/chips.png?dl=1'
@@ -267,11 +267,29 @@ class Deck:
 
 #define event handlers for buttons
 def deal():
-    global outcome, in_play, player_hand, dealer_hand
-    
+    global outcome, in_play, player_hand, dealer_hand, player_money, dealer_money, deck
+     
     if in_play:
         # player lost
-        pass
+        dealer_money += 2*bet
+        
+    if player_money <= 0 or dealer_money <=0:
+        #game over
+        in_play = False
+        return
+        
+    if deck.get_amount() < 10:
+        
+        print 'In deck', deck.get_amount(), 'cards'
+        deck = Deck()
+        deck.shuffle()
+        print 'In deck', deck.get_amount(), 'cards'
+    
+    player_money -= bet
+    dealer_money -= bet
+    
+    
+
     player_hand = Hand((200, 500))
     
     dealer_hand = Hand((200, 100))
@@ -292,30 +310,25 @@ def deal():
 
 def hit():
     
-    global outcome, in_play, deck
+    global outcome, in_play, deck, player_money, dealer_money
     
     if not in_play:
         return
     
-    if deck.get_amount() < 10:
-        
-        print 'In deck', deck.get_amount(), 'cards'
-        deck = Deck()
-        deck.shuffle()
-        print 'In deck', deck.get_amount(), 'cards'
-    # if the hand is in play, hit the player
+        # if the hand is in play, hit the player
     
     
     player_hand.add_card(deck.get_card())
         
         
-    if player_hand.get_value() < 21:    
+    if player_hand.get_value() <= 21:    
         print 'Player Hit. Values =', player_hand.get_value()
         
     # if busted, assign a message to outcome, update in_play and score
     else:
         in_play = False
         outcome = 'Player lost'
+        dealer_money += 2*bet
         print outcome
         win_sound.play()
         return
@@ -325,7 +338,7 @@ def hit():
     
        
 def stand():
-    global outcome, in_play, deck
+    global outcome, in_play, deck, player_money, dealer_money
     
     # if hand is in play, repeatedly hit dealer until his hand has value 17 or more
     if not in_play:
@@ -340,11 +353,13 @@ def stand():
     # assign a message to outcome, update in_play and score
     if dealer_hand.get_value() > 21:
         outcome = 'Dealer lost'
+        player_money += 2*bet
         print outcome
         sound.play()
         
     else:
         outcome = 'Dealer Win'
+        dealer_money += 2*bet
         print outcome
         win_sound.play()
     
@@ -359,18 +374,20 @@ def draw(canvas):
     canvas.draw_image(chips_image, chips_center, chips_size, chips1_canvas_center, chips1_canvas_size)
     canvas.draw_image(chips_image, chips_center, chips_size, chips2_canvas_center, chips2_canvas_size)
     
-    
+    canvas.draw_text(str(dealer_money), (650, 220), 70, 'black')
+    canvas.draw_text(str(player_money), (650, 420), 70, 'black')
     player_hand.draw(canvas)
     dealer_hand.draw(canvas)
-
-
+    
+    
 # define event handlers
 def mouseclick(pos):
-    return
-    empty_space = True
     
-    if card.is_selected(pos):
-        card.expose_card()
+    if not in_play and dealer_hand.get_card(0).is_selected(pos):
+        dealer_hand.get_card(0).expose_card()
+        
+    else:
+        return
     
 
 # initialization frame
@@ -386,6 +403,8 @@ frame.set_mouseclick_handler(mouseclick)
 
 deck = Deck()
 deck.shuffle()
+player_money = dealer_money = 100
+bet = 5
 # get things rolling
 deal()
 frame.start()
