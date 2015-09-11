@@ -26,7 +26,7 @@ logo_url = 'https://www.dropbox.com/s/wgv3507e1hvityl/blackjack-logo.png?dl=1'
 logo_image = simplegui.load_image(logo_url)
 logo_size = 300, 300
 logo_center = 150, 150
-logo_canvas_center = 300, 300
+logo_canvas_center = 400, 300
 logo_canvas_size = 200, 200
 
 
@@ -44,6 +44,14 @@ player_center = 225/2 , 225/2
 player_canvas_center = 80, 500
 player_canvas_size = 175/2, 237/2
 
+chips_url = 'https://www.dropbox.com/s/5dkx37jwu22e1tv/chips.png?dl=1'
+chips_image = simplegui.load_image(chips_url)
+chips_size = 224, 220
+chips_center = 224/2 , 220/2
+chips1_canvas_center = 600, 200
+chips1_canvas_size = 80 ,80
+chips2_canvas_center = 600, 400
+chips2_canvas_size = 80 ,80
 
 # define globals for cards
 cards_value = ['A', '2', '3', '4','5','6','7','8','9','10','J','Q','K']
@@ -261,6 +269,9 @@ class Deck:
 def deal():
     global outcome, in_play, player_hand, dealer_hand
     
+    if in_play:
+        # player lost
+        pass
     player_hand = Hand((200, 500))
     
     dealer_hand = Hand((200, 100))
@@ -282,6 +293,9 @@ def deal():
 def hit():
     
     global outcome, in_play, deck
+    
+    if not in_play:
+        return
     
     if deck.get_amount() < 10:
         
@@ -311,8 +325,12 @@ def hit():
     
        
 def stand():
+    global outcome, in_play, deck
     
     # if hand is in play, repeatedly hit dealer until his hand has value 17 or more
+    if not in_play:
+        return
+    
     dealer_card1 = dealer_hand.get_card(0)
     dealer_card1.expose_card()
     while dealer_hand.get_value() < player_hand.get_value():
@@ -329,14 +347,19 @@ def stand():
         outcome = 'Dealer Win'
         print outcome
         win_sound.play()
-
+    
+    in_play = False
+    
 # draw handler    
 def draw(canvas):
     # test to make sure that card.draw works, replace with your code below
     canvas.draw_image(logo_image, logo_center, logo_size, logo_canvas_center, logo_canvas_size)
     canvas.draw_image(dealer_image, dealer_center, dealer_size, dealer_canvas_center, dealer_canvas_size)
     canvas.draw_image(player_image, player_center, player_size, player_canvas_center, player_canvas_size)
-        
+    canvas.draw_image(chips_image, chips_center, chips_size, chips1_canvas_center, chips1_canvas_size)
+    canvas.draw_image(chips_image, chips_center, chips_size, chips2_canvas_center, chips2_canvas_size)
+    
+    
     player_hand.draw(canvas)
     dealer_hand.draw(canvas)
 
@@ -351,7 +374,7 @@ def mouseclick(pos):
     
 
 # initialization frame
-frame = simplegui.create_frame("Blackjack", 600, 600)
+frame = simplegui.create_frame("Blackjack", 800, 600)
 frame.set_canvas_background("Green")
 
 #create buttons and canvas callback
