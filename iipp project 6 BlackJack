@@ -24,7 +24,7 @@ win_sound = simplegui.load_sound('https://www.dropbox.com/s/msp7dlph5tv7ms1/laug
 
 # define globals for cards
 cards_value = ['A', '2', '3', '4','5','6','7','8','9','10','J','Q','K']
-cards_suit = ['Clubs', 'Spades', 'Diamonds','Hearts']
+cards_suit = ['Clubs', 'Diamonds','Hearts', 'Spades']
 VALUES = {'A':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, 'T':10, 'J':10, 'Q':10, 'K':10}
 
 
@@ -142,21 +142,40 @@ class Card:
         
 # define hand class
 class Hand:
-    def __init__(self):
-        pass	# create Hand object
+    # create Hand object
+    def __init__(self, loc =(200,200)):
+        self.location = loc
+        self.hand = []
+        
 
+    # return a string representation of a hand
     def __str__(self):
-        pass	# return a string representation of a hand
+        print self.location
+        if len(self.hand) > 0:
+            for card in self.hand:
+                print card
+            return ''
+        else:
+            return self.hand
+        
 
+    # add a card object to a hand
     def add_card(self, card):
-        pass	# add a card object to a hand
+        card.expose_card()
+        card.update_location ((self.location[0]+len(self.hand)*TILE_WIDTH, self.location[1]))
+        self.hand.append(card)
 
+    # compute the value of the hand, see Blackjack video
     def get_value(self):
         # count aces as 1, if the hand has an ace, then add 10 to hand value if it doesn't bust
-        pass	# compute the value of the hand, see Blackjack video
+        pass	
    
-    def draw(self, canvas, pos):
-        pass	# draw a hand on the canvas, use the draw method for cards
+    # draw a hand on the canvas, use the draw method for cards
+    def draw(self, canvas):
+        if len(self.hand) > 0:
+            for card in self.hand:
+                card.draw(canvas)
+                
  
         
 # define deck class 
@@ -168,7 +187,11 @@ class Deck:
                 loc = [0,0]
                 
                 self.cards_deck.append(Card(i,j))
-        
+    
+    def __str__ (self):
+        for card in self.cards_deck:
+            print card
+        return ''
         
     def get_random_card(self):
         return self.cards_deck.pop(random.randrange(len(self.cards_deck)))
@@ -202,7 +225,27 @@ class Deck:
 #define event handlers for buttons
 def deal():
     global outcome, in_play
-
+    
+    
+#    print deck.get_amount_in_deck()
+#    print deck
+#    print ''
+    
+    c1 = deck.get_card()
+    c1.update_location((200,200))
+    print c1
+    c2 = deck.get_random_card()
+    print c2
+    
+    player_hand.add_card(c1)
+    player_hand.add_card(c2)
+    
+    print player_hand
+#    print deck.get_amount_in_deck()
+#    print ''
+#    deck.shuffle()
+    
+#    print deck
     # your code goes here
     
     in_play = True
@@ -227,6 +270,7 @@ def draw(canvas):
     
     
     card.draw(canvas)
+    player_hand.draw(canvas)
 
 
 # define event handlers
@@ -237,6 +281,7 @@ def mouseclick(pos):
     if card.is_selected(pos):
         card.expose_card()
     
+
 # initialization frame
 frame = simplegui.create_frame("Blackjack", 600, 600)
 frame.set_canvas_background("Green")
@@ -248,8 +293,9 @@ frame.add_button("Stand", stand, 200)
 frame.set_draw_handler(draw)
 frame.set_mouseclick_handler(mouseclick)
 card = Card("Spades", "A")
-card.update_location([300, 300])
-
+card.update_location([200, 200])
+deck = Deck()
+player_hand = Hand((200, 350))
 # get things rolling
 deal()
 frame.start()
