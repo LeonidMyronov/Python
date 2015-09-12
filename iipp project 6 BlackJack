@@ -462,8 +462,18 @@ frame.set_canvas_background("Green")
 
 #create buttons and canvas callback
 frame.add_button("Deal", deal, 200)
+frame.add_label('')
 frame.add_button("Hit",  hit, 200)
+frame.add_label('')
 frame.add_button("Stand", stand, 200)
+frame.add_label('')
+frame.add_label('')
+frame.add_label('')
+frame.add_label('Game Hints:')
+frame.add_label('')
+frame.add_label('You can bet only before new deal. Bet chips are 10, 25, 50.')
+frame.add_label('')
+frame.add_label("If you were busted you can expose dealer's hole card by clicking on it")
 frame.set_draw_handler(draw)
 frame.set_mouseclick_handler(mouseclick)
 
