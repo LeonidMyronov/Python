@@ -428,11 +428,12 @@ def mouseclick(pos):
 #    print 'pos =', pos
     
     
-    if not in_play and dealer_hand.get_card(0).is_selected(pos):
-        dealer_hand.get_card(0).expose_card()
+    if not in_play:
+        if dealer_hand.get_card(0).is_selected(pos):
+            dealer_hand.get_card(0).expose_card()
         
-    if is_inside(pos, r_arr_canvas_center, r_arr_canvas_size):
-        bet_index = (bet_index + 1)%3
+        if is_inside(pos, r_arr_canvas_center, r_arr_canvas_size):
+            bet_index = (bet_index + 1)%3
 #        print bet_index, bet[
 #        pass
     # change chip image
@@ -440,8 +441,8 @@ def mouseclick(pos):
         
     
     
-    elif is_inside(pos, l_arr_canvas_center, l_arr_canvas_size):
-        bet_index = (bet_index - 1)%3
+        elif is_inside(pos, l_arr_canvas_center, l_arr_canvas_size):
+            bet_index = (bet_index - 1)%3
 #        print bet_index
 #        pass
     # change chip image
@@ -451,8 +452,8 @@ def mouseclick(pos):
     
     
     
-    else:
-        return
+        else:
+            return
     
 
 # initialization frame
