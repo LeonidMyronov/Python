@@ -289,7 +289,7 @@ def deal():
         dealer_money += 2*bet
         
     if player_money <= 0 or dealer_money <=0:
-        #game over
+        outcome = 'Game Over'
         in_play = False
         return
         
@@ -320,8 +320,10 @@ def deal():
     dealer_card1.hide_card()
     dealer_hand.add_card(deck.get_card())
     
-    print 'Player value = ', player_hand.get_value()
+#    print 'Player value = ', player_hand.get_value()
     in_play = True
+    outcome = 'Hit or Stand?'
+
 
 def hit():
     
@@ -337,14 +339,15 @@ def hit():
         
         
     if player_hand.get_value() <= 21:    
-        print 'Player Hit. Values =', player_hand.get_value()
+        pass
+#        print 'Player Hit. Values =', player_hand.get_value()
         
     # if busted, assign a message to outcome, update in_play and score
     else:
         in_play = False
-        outcome = 'Player lost'
+        outcome = 'You lose!'
         dealer_money += 2*bet
-        print outcome
+#        print outcome
         win_sound.play()
         return
     
@@ -364,18 +367,18 @@ def stand():
     while dealer_hand.get_value() < player_hand.get_value():
         dealer_hand.add_card(deck.get_card())
     
-    print 'Dealer value = ', dealer_hand.get_value()
+#    print 'Dealer value = ', dealer_hand.get_value()
     # assign a message to outcome, update in_play and score
     if dealer_hand.get_value() > 21:
-        outcome = 'Dealer lost'
+        outcome = 'You won!'
         player_money += 2*bet
-        print outcome
+#        print outcome
         sound.play()
         
     else:
-        outcome = 'Dealer Win'
+        outcome = 'You lose!'
         dealer_money += 2*bet
-        print outcome
+#        print outcome
         win_sound.play()
     
     in_play = False
@@ -393,8 +396,19 @@ def draw(canvas):
     canvas.draw_text(str(player_money), (660, 420), 70, 'black', "sans-serif")
     
     canvas.draw_image(bet_image, bet_center, bet_size, bet_canvas_center, bet_canvas_size)
-    
+        
     canvas.draw_image(cloud_image, cloud_center, cloud_size, cloud_canvas_center, cloud_canvas_size)
+    if in_play:
+        canvas.draw_text(outcome, (cloud_canvas_center[0]-95, cloud_canvas_center[1]+40), 36, 'black', "sans-serif")
+    else:
+        if player_money <= 0 or dealer_money <=0:
+            canvas.draw_text(outcome, (cloud_canvas_center[0]-85, cloud_canvas_center[1]+40), 36, 'red', "sans-serif")
+        else:
+            canvas.draw_text(outcome, (cloud_canvas_center[0]-75, cloud_canvas_center[1]+10), 40, 'red', "sans-serif")
+            canvas.draw_text('New Deal?', (cloud_canvas_center[0]-50, cloud_canvas_center[1]+45), 25, 'black', "sans-serif")
+            canvas.draw_text('Now you can bet', (cloud_canvas_center[0]-70, cloud_canvas_center[1]+70), 20, 'black', "sans-serif")
+            
+        
     player_hand.draw(canvas)
     dealer_hand.draw(canvas)
     
