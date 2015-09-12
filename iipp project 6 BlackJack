@@ -53,7 +53,7 @@ chips1_canvas_size = 80 ,80
 chips2_canvas_center = 600, 400
 chips2_canvas_size = 80 ,80
 
-bet_index = 1
+bet_index = 0
 bet = [10, 25, 50]
 bet_url = 'https://www.dropbox.com/s/e3grpqyrtnp7r3i/poker_chips_with_value.png?dl=1'
 bet_image = simplegui.load_image(bet_url)
@@ -89,6 +89,12 @@ cloud_center = 150 , 150
 cloud_canvas_center = 150, 270
 cloud_canvas_size = 250 ,250
 
+money_url = 'https://www.dropbox.com/s/9sioigfs9ujpv46/wheres-my-money.jpg?dl=1'
+money_image = simplegui.load_image(money_url)
+money_size = 500, 388
+money_center = 250 , 194
+money_canvas_center = 600, 150
+money_canvas_size = 500,388
 
 # define globals for cards
 cards_value = ['A', '2', '3', '4','5','6','7','8','9','10','J','Q','K']
@@ -387,7 +393,6 @@ def draw(canvas):
     canvas.draw_image(bet_image, bet_center[bet_index], bet_size, bet_canvas_center, bet_canvas_size)
     canvas.draw_image(l_arr_image, l_arr_center, l_arr_size, l_arr_canvas_center, l_arr_canvas_size)
     canvas.draw_image(r_arr_image, r_arr_center, r_arr_size, r_arr_canvas_center, r_arr_canvas_size)
-    
         
     canvas.draw_image(cloud_image, cloud_center, cloud_size, cloud_canvas_center, cloud_canvas_size)
     if in_play:
@@ -395,6 +400,8 @@ def draw(canvas):
     else:
         if player_money <= 0 or dealer_money <=0:
             canvas.draw_text(outcome, (cloud_canvas_center[0]-85, cloud_canvas_center[1]+40), 36, 'red', "sans-serif")
+            if player_money <= 0:
+                canvas.draw_image(money_image, money_center, money_size, money_canvas_center, money_canvas_size)
         else:
             canvas.draw_text(outcome, (cloud_canvas_center[0]-75, cloud_canvas_center[1]+10), 40, 'red', "sans-serif")
             canvas.draw_text('New Deal?', (cloud_canvas_center[0]-50, cloud_canvas_center[1]+45), 25, 'black', "sans-serif")
