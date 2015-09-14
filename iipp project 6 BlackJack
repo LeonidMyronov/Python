@@ -240,7 +240,10 @@ class Hand:
     def get_card (self, index):
         return self.hand[index]
                 
- 
+    def remove_card(self, index=-1):
+        self.hand_value -= VALUES[self.hand[index].get_value()]
+        self.hand.pop(index)
+        
         
 # define deck class 
 class Deck:
@@ -474,13 +477,27 @@ def mouseclick(pos):
     # change chip image
     # change bet value
     
-    
-    
-    
-    
     else:
         return
     
+def keydown (key):
+    if in_play:
+#        print 'show cheat'
+        if key == simplegui.KEY_MAP['c']:
+            player_hand.add_card(deck.cards_deck[-1])
+#            print player_hand
+#            print player_hand.get_value()
+
+        
+
+def keyup (key):
+    if in_play:
+        if key == simplegui.KEY_MAP['c']:
+#            print 'hide cheat'
+            player_hand.remove_card()
+#            print player_hand
+#            print player_hand.get_value()
+         
 
 # initialization frame
 frame = simplegui.create_frame("Blackjack", 800, 600)
@@ -502,7 +519,8 @@ frame.add_label('')
 frame.add_label("If you were busted you can expose dealer's hole card by clicking on it")
 frame.set_draw_handler(draw)
 frame.set_mouseclick_handler(mouseclick)
-frame.set_key
+frame.set_keydown_handler(keydown)
+frame.set_keyup_handler(keyup)
 
 deck = Deck()
 deck.shuffle()
