@@ -114,7 +114,8 @@ VALUES = {'A':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, '10':10
 # initialize some useful global variables
 in_play = False
 outcome = ""
-score = 0
+bank = 0
+start = True
 
 # define globals for cards
 #SUITS = ('C', 'S', 'H', 'D')
@@ -272,9 +273,10 @@ class Deck:
 
 #define event handlers for buttons
 def deal():
-    global outcome, in_play, player_hand, dealer_hand, player_money, dealer_money, deck, bank
+    global outcome, in_play, player_hand, dealer_hand, player_money, dealer_money 
+    global deck, bank, start
     
-    
+    start = False
     
     if in_play:
         # player lost
@@ -291,10 +293,10 @@ def deal():
     
     if deck.get_amount() < 10:
         
-        print 'In deck', deck.get_amount(), 'cards'
+#        print 'In deck', deck.get_amount(), 'cards'
         deck = Deck()
         deck.shuffle()
-        print 'In deck', deck.get_amount(), 'cards'
+#        print 'In deck', deck.get_amount(), 'cards'
     
     
     
@@ -388,41 +390,53 @@ def stand():
     
 # draw handler    
 def draw(canvas):
-    # test to make sure that card.draw works, replace with your code below
+
     canvas.draw_image(logo_image, logo_center, logo_size, logo_canvas_center, logo_canvas_size)
     canvas.draw_image(dealer_image, dealer_center, dealer_size, dealer_canvas_center, dealer_canvas_size)
     canvas.draw_image(player_image, player_center, player_size, player_canvas_center, player_canvas_size)
-    
-    canvas.draw_image(chips_image, chips_center, chips_size, chips1_canvas_center, chips1_canvas_size)
-    canvas.draw_image(chips_image, chips_center, chips_size, chips2_canvas_center, chips2_canvas_size)
+
+    canvas.draw_image(bet_image, bet_center[bet_index], bet_size, bet_canvas_center, bet_canvas_size)
+    canvas.draw_image(l_arr_image, l_arr_center, l_arr_size, l_arr_canvas_center, l_arr_canvas_size)
+    canvas.draw_image(r_arr_image, r_arr_center, r_arr_size, r_arr_canvas_center, r_arr_canvas_size)
+
     canvas.draw_text(str(dealer_money), (660, 220), 40, 'black', "sans-serif")
     canvas.draw_text(str(player_money), (660, 420), 40, 'black', "sans-serif")
     canvas.draw_text('Bank: '+str(bank), (640, 60), 30, 'black', "sans-serif")
     
-    canvas.draw_image(bet_image, bet_center[bet_index], bet_size, bet_canvas_center, bet_canvas_size)
-    canvas.draw_image(l_arr_image, l_arr_center, l_arr_size, l_arr_canvas_center, l_arr_canvas_size)
-    canvas.draw_image(r_arr_image, r_arr_center, r_arr_size, r_arr_canvas_center, r_arr_canvas_size)
-        
+    canvas.draw_image(chips_image, chips_center, chips_size, chips1_canvas_center, chips1_canvas_size)
+    canvas.draw_image(chips_image, chips_center, chips_size, chips2_canvas_center, chips2_canvas_size)
+
     canvas.draw_image(cloud_image, cloud_center, cloud_size, cloud_canvas_center, cloud_canvas_size)
-    canvas.draw_text('Your scores: '+str(player_hand.get_value()), (40, 580), 20, 'black', "sans-serif")
-    if in_play:
-        canvas.draw_text(outcome, (cloud_canvas_center[0]-95, cloud_canvas_center[1]+40), 36, 'black', "sans-serif")
-        
-    else:
-        canvas.draw_text("Dealer's scores: "+str(dealer_hand.get_value()), (40, 30), 20, 'black', "sans-serif")
-        if player_money <= 0 or dealer_money <=0:
-            canvas.draw_text(outcome, (cloud_canvas_center[0]-85, cloud_canvas_center[1]+40), 36, 'red', "sans-serif")
-            if player_money <= 0:
-                canvas.draw_image(money_image, money_center, money_size, money_canvas_center, money_canvas_size)
-        else:
-            canvas.draw_text(outcome, (cloud_canvas_center[0]-75, cloud_canvas_center[1]+10), 40, 'red', "sans-serif")
-            canvas.draw_text('New Deal?', (cloud_canvas_center[0]-50, cloud_canvas_center[1]+45), 25, 'black', "sans-serif")
-            canvas.draw_text('Now you can bet', (cloud_canvas_center[0]-70, cloud_canvas_center[1]+70), 20, 'black', "sans-serif")
-            
     canvas.draw_text('Leonid Myronov', (670, 580), 15, 'black', "sans-serif")        
-    player_hand.draw(canvas)
-    dealer_hand.draw(canvas)
     
+    # test to make sure that card.draw works, replace with your code below
+    if start:
+        canvas.draw_text('Blackjack starts!', (cloud_canvas_center[0]-80, cloud_canvas_center[1]), 25, 'red', "sans-serif")
+        canvas.draw_text('Choose your bet', (cloud_canvas_center[0]-70, cloud_canvas_center[1]+35), 20, 'black', "sans-serif")
+        canvas.draw_text("and press 'Deal'", (cloud_canvas_center[0]-65, cloud_canvas_center[1]+70), 20, 'black', "sans-serif")
+    
+    
+            
+    else:
+        canvas.draw_text('Your scores: '+str(player_hand.get_value()), (40, 580), 20, 'black', "sans-serif")
+        if in_play:
+            canvas.draw_text(outcome, (cloud_canvas_center[0]-95, cloud_canvas_center[1]+40), 36, 'black', "sans-serif")
+
+        else:
+            canvas.draw_text("Dealer's scores: "+str(dealer_hand.get_value()), (40, 30), 20, 'black', "sans-serif")
+            if player_money <= 0 or dealer_money <=0:
+                canvas.draw_text(outcome, (cloud_canvas_center[0]-85, cloud_canvas_center[1]+40), 36, 'red', "sans-serif")
+                if player_money <= 0:
+                    canvas.draw_image(money_image, money_center, money_size, money_canvas_center, money_canvas_size)
+            else:
+                canvas.draw_text(outcome, (cloud_canvas_center[0]-75, cloud_canvas_center[1]+10), 40, 'red', "sans-serif")
+                canvas.draw_text('New Deal?', (cloud_canvas_center[0]-50, cloud_canvas_center[1]+45), 25, 'black', "sans-serif")
+                canvas.draw_text('Now you can bet', (cloud_canvas_center[0]-70, cloud_canvas_center[1]+70), 20, 'black', "sans-serif")
+
+
+        player_hand.draw(canvas)
+        dealer_hand.draw(canvas)
+
     
 # define event handlers
 
@@ -440,12 +454,12 @@ def mouseclick(pos):
 #    print 'pos =', pos
     
     
-    if not in_play:
-        if dealer_hand.get_card(0).is_selected(pos):
-            dealer_hand.get_card(0).expose_card()
+#    if not in_play:
+#        if dealer_hand.get_card(0).is_selected(pos):
+#            dealer_hand.get_card(0).expose_card()
         
-        if is_inside(pos, r_arr_canvas_center, r_arr_canvas_size):
-            bet_index = (bet_index + 1)%3
+    if is_inside(pos, r_arr_canvas_center, r_arr_canvas_size):
+        bet_index = (bet_index + 1)%3
 #        print bet_index, bet[
 #        pass
     # change chip image
@@ -453,8 +467,8 @@ def mouseclick(pos):
         
     
     
-        elif is_inside(pos, l_arr_canvas_center, l_arr_canvas_size):
-            bet_index = (bet_index - 1)%3
+    elif is_inside(pos, l_arr_canvas_center, l_arr_canvas_size):
+        bet_index = (bet_index - 1)%3
 #        print bet_index
 #        pass
     # change chip image
@@ -464,8 +478,8 @@ def mouseclick(pos):
     
     
     
-        else:
-            return
+    else:
+        return
     
 
 # initialization frame
@@ -488,11 +502,12 @@ frame.add_label('')
 frame.add_label("If you were busted you can expose dealer's hole card by clicking on it")
 frame.set_draw_handler(draw)
 frame.set_mouseclick_handler(mouseclick)
+frame.set_key
 
 deck = Deck()
 deck.shuffle()
 # get things rolling
-deal()
+#deal()
 frame.start()
 
 
