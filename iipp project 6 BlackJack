@@ -395,8 +395,8 @@ def draw(canvas):
     
     canvas.draw_image(chips_image, chips_center, chips_size, chips1_canvas_center, chips1_canvas_size)
     canvas.draw_image(chips_image, chips_center, chips_size, chips2_canvas_center, chips2_canvas_size)
-    canvas.draw_text(str(dealer_money), (660, 220), 70, 'black', "sans-serif")
-    canvas.draw_text(str(player_money), (660, 420), 70, 'black', "sans-serif")
+    canvas.draw_text(str(dealer_money), (660, 220), 40, 'black', "sans-serif")
+    canvas.draw_text(str(player_money), (660, 420), 40, 'black', "sans-serif")
     canvas.draw_text('Bank: '+str(bank), (640, 60), 30, 'black', "sans-serif")
     
     canvas.draw_image(bet_image, bet_center[bet_index], bet_size, bet_canvas_center, bet_canvas_size)
@@ -419,7 +419,7 @@ def draw(canvas):
             canvas.draw_text('New Deal?', (cloud_canvas_center[0]-50, cloud_canvas_center[1]+45), 25, 'black', "sans-serif")
             canvas.draw_text('Now you can bet', (cloud_canvas_center[0]-70, cloud_canvas_center[1]+70), 20, 'black', "sans-serif")
             
-        
+    canvas.draw_text('Leonid Myronov', (670, 580), 15, 'black', "sans-serif")        
     player_hand.draw(canvas)
     dealer_hand.draw(canvas)
     
