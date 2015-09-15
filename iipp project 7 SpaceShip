@@ -206,6 +206,7 @@ def keydown(key):
         
         my_ship.update_image_pos([90,0])
         my_ship.thrust = True
+        ship_thrust_sound.play()
         
 def keyup(key):
     if key==simplegui.KEY_MAP["left"]:
@@ -217,8 +218,10 @@ def keyup(key):
     elif key==simplegui.KEY_MAP["up"]:
         my_ship.update_image_pos([-90,0])
         my_ship.thrust = False
-        print 'x=',math.cos(my_ship.angle)
-        print 'y=',math.sin(my_ship.angle)
+#        print 'x=',math.cos(my_ship.angle)
+#        print 'y=',math.sin(my_ship.angle)
+        ship_thrust_sound.rewind()
+#        ship_thrust_sound.stop()
         
         
 # initialize frame
@@ -240,3 +243,4 @@ timer = simplegui.create_timer(1000.0, rock_spawner)
 # get things rolling
 timer.start()
 frame.start()
+soundtrack.play()
