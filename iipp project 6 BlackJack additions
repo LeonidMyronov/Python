@@ -1,0 +1,569 @@
+# Mini-project #6 - Blackjack
+# music load from http://www.wavsource.com/
+#################################################
+
+
+import simplegui
+import random
+
+# define globals
+TILE_WIDTH = 70
+TILE_HEIGHT = 100
+FRAME_WIDTH = 800 
+FRAME_HEIGHT = 600
+cards_url = 'https://www.dropbox.com/s/r3nk7jj6rc75qf9/Cards.png?dl=1'
+cards_image = simplegui.load_image(cards_url)
+cards_image_size = 1280, 715
+
+card_image_size = 98.46, 143
+card_image_center = card_image_size[0]/2, card_image_size[1]/2
+
+back_card_image_center = card_image_size[0]*2+card_image_center[0], card_image_size[1]*4+card_image_center[1]
+deck_loc_center = [FRAME_WIDTH-card_image_center[0]-20, FRAME_HEIGHT-card_image_center[1]-20]
+
+sound = simplegui.load_sound('https://www.dropbox.com/s/5t63pwt6yqpqf79/cheering.wav?dl=1')
+win_sound = simplegui.load_sound('https://www.dropbox.com/s/msp7dlph5tv7ms1/laugh_x.wav?dl=1')
+
+logo_url = 'https://www.dropbox.com/s/wgv3507e1hvityl/blackjack-logo.png?dl=1'
+logo_image = simplegui.load_image(logo_url)
+logo_size = 300, 300
+logo_center = 150, 150
+logo_canvas_center = 400, 300
+logo_canvas_size = 200, 200
+
+
+dealer_url = 'https://www.dropbox.com/s/vcl7ao4w5gjcoxa/BlackJack-dealer.jpg?dl=1'
+dealer_image = simplegui.load_image(dealer_url)
+dealer_size = 175, 237
+dealer_center = 175/2, 237/2
+dealer_canvas_center = 90, 100
+dealer_canvas_size = 175/2, 237/2
+
+player_url = 'https://www.dropbox.com/s/e09g93d73ugcsu6/card-gamer.jpg?dl=1'
+player_image = simplegui.load_image(player_url)
+player_size = 183, 275
+player_center = 183/2 , 275/2
+player_canvas_center = 90, 500
+player_canvas_size = 175/2, 237/2
+
+chips_url = 'https://www.dropbox.com/s/5dkx37jwu22e1tv/chips.png?dl=1'
+chips_image = simplegui.load_image(chips_url)
+chips_size = 224, 220
+chips_center = 224/2 , 220/2
+chips1_canvas_center = 600, 200
+chips1_canvas_size = 80 ,80
+chips2_canvas_center = 600, 400
+chips2_canvas_size = 80 ,80
+
+bet_index = 0
+bet = [10, 25, 50]
+bet_url = 'https://www.dropbox.com/s/e3grpqyrtnp7r3i/poker_chips_with_value.png?dl=1'
+bet_image = simplegui.load_image(bet_url)
+bet_size = 140, 140
+bet_center = [[90 , 90],[255, 90],[420, 90]]
+bet_canvas_center = 600, 300
+bet_canvas_size = 60 ,60
+
+
+player_money = dealer_money = 100
+
+r_arr_url = 'https://www.dropbox.com/s/5m09bwyfk0df1dq/right%20arrow.png?dl=1'
+r_arr_image = simplegui.load_image(r_arr_url)
+r_arr_size = 256, 256
+r_arr_center = 128 , 128
+r_arr_canvas_center = 650, 300
+r_arr_canvas_size = 30 ,30
+
+l_arr_url = 'https://www.dropbox.com/s/db8ys1wwhkgcfyq/left%20arrow.png?dl=1'
+l_arr_image = simplegui.load_image(l_arr_url)
+l_arr_size = 256, 256
+l_arr_center = 128 , 128
+l_arr_canvas_center = 550, 300
+l_arr_canvas_size = 30 ,30
+
+
+
+
+cloud_url = 'https://www.dropbox.com/s/y26an5cnpsa7iy9/cloud2.png?dl=1'
+cloud_image = simplegui.load_image(cloud_url)
+cloud_size = 299, 299
+cloud_center = 150 , 150
+cloud_canvas_center = 150, 270
+cloud_canvas_size = 250 ,250
+
+money_url = 'https://www.dropbox.com/s/9sioigfs9ujpv46/wheres-my-money.jpg?dl=1'
+money_image = simplegui.load_image(money_url)
+money_size = 500, 388
+money_center = 250 , 194
+money_canvas_center = 600, 150
+money_canvas_size = 500,388
+
+# define globals for cards
+cards_value = ['A', '2', '3', '4','5','6','7','8','9','10','J','Q','K']
+cards_suit = ['Clubs', 'Diamonds','Hearts', 'Spades']
+VALUES = {'A':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, '10':10, 'J':10, 'Q':10, 'K':10}
+
+
+# load card sprite - 936x384 - source: jfitz.com
+#CARD_SIZE = (72, 96)
+#CARD_CENTER = (36, 48)
+#card_images = simplegui.load_image("http://storage.googleapis.com/codeskulptor-assets/cards_jfitz.png")
+#
+#CARD_BACK_SIZE = (72, 96)
+#CARD_BACK_CENTER = (36, 48)
+#card_back = simplegui.load_image("http://storage.googleapis.com/codeskulptor-assets/card_jfitz_back.png")    
+
+# initialize some useful global variables
+in_play = in_moving = False
+outcome = ""
+bank = 0
+start = True
+
+# define globals for cards
+#SUITS = ('C', 'S', 'H', 'D')
+#RANKS = ('A', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K')
+#VALUES = {'A':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, 'T':10, 'J':10, 'Q':10, 'K':10}
+
+
+# define card class
+
+class Card:
+    
+    # definition of intializer
+    def __init__(self, suit, value, exp=False, loc=[0,0]):
+        if (suit in cards_suit) and (value in cards_value):
+            self.exposed = exp
+            self.location = loc #center location at canvas
+            self.value = value
+            self.suit = suit
+            x = cards_value.index(value)*card_image_size[0]+card_image_center[0]
+            y = cards_suit.index(suit)*card_image_size[1]+card_image_center[1]
+            image_center = x,y
+            self.image_center = image_center
+        else:
+            self.value = None
+            self.suit = None
+#            print "Invalid card: ", suit, value
+        
+    # definition of getter for number
+    def get_value(self):
+        return self.value
+    
+    def get_image_location(self):
+        return self.image_center
+    
+    def get_suit(self):
+        return self.suit
+    
+    # check whether tile is exposed
+    def is_exposed(self):
+        return self.exposed
+    
+    # expose the tile
+    def expose_card(self):
+        self.exposed = True
+    
+    # hide the tile       
+    def hide_card(self):
+        self.exposed = False
+        
+    # string method for tiles    
+    def __str__(self):
+        return str(self.suit)+' '+str(self.value)+", exposed is " + str(self.exposed)+', image center='+str(self.image_center)+', canvas pos='+str(self.location)    
+
+    # draw method for tiles
+    def draw(self, canvas):
+        loc = self.location
+        if self.exposed:
+            canvas.draw_image(cards_image, self.image_center, card_image_size, self.location, (TILE_WIDTH, TILE_HEIGHT))
+        else:
+            canvas.draw_image(cards_image, back_card_image_center, card_image_size, loc, (TILE_WIDTH, TILE_HEIGHT))
+
+    # selection method for tiles
+    def is_selected(self, pos):
+        inside_hor = self.location[0] - TILE_WIDTH/2 <= pos[0] < self.location[0] +  TILE_WIDTH/2
+        inside_vert = self.location[1] -  TILE_HEIGHT/2 <= pos[1] <= self.location[1] +  TILE_HEIGHT/2
+        return  inside_hor and inside_vert     
+    
+    # update position method for card
+    def update_location(self, pos):
+        self.location = pos
+    
+    # compare method for two cards
+    def is_equal(self, card):
+        return self.value == card.get_value() and self.suit == card.get_suit()
+    
+    def get_location(self):
+        return self.location
+        
+
+        
+# define hand class
+class Hand:
+    # create Hand object
+    def __init__(self, loc =(200,200)):
+        self.location = loc
+        self.hand = []
+        self.hand_value = 0
+
+    # return a string representation of a hand
+    def __str__(self):
+#        print self.location
+#        print self.hand_value
+        if len(self.hand) > 0:
+            for card in self.hand:
+                print card
+            return ''
+        else:
+            return str(self.hand)
+        
+    #get next card position
+    def get_next_position(self):
+        return [self.location[0]+len(self.hand)*TILE_WIDTH, self.location[1]]
+    
+    # add a card object to a hand
+    def add_card(self, card):
+        card.expose_card()
+        card.update_location ((self.location[0]+len(self.hand)*TILE_WIDTH, self.location[1]))
+        self.hand.append(card)
+        self.hand_value += VALUES[card.get_value()]
+
+    # compute the value of the hand, see Blackjack video
+    def get_value(self):
+        # count aces as 1, if the hand has an ace, then add 10 to hand value if it doesn't bust
+        if 'A' not in [card.get_value() for card in self.hand]:
+            return self.hand_value
+        elif self.hand_value + 10 <= 21:
+            return self.hand_value + 10
+        else:
+            return self.hand_value
+            
+            
+    # draw a hand on the canvas, use the draw method for cards
+    def draw(self, canvas):
+        if len(self.hand) > 0:
+            for card in self.hand:
+                card.draw(canvas)
+                
+    # get card of the hand
+    def get_card (self, index):
+        return self.hand[index]
+                
+    def remove_card(self, index=-1):
+        self.hand_value -= VALUES[self.hand[index].get_value()]
+        self.hand.pop(index)
+        
+        
+# define deck class 
+class Deck:
+    def __init__(self):
+        self.cards_deck = []
+        for i in cards_suit:
+            for j in cards_value:
+                loc = [0,0]
+                
+                self.cards_deck.append(Card(i,j))
+    
+    def __str__ (self):
+        for card in self.cards_deck:
+            print card
+        return ''
+        
+    def get_random_card(self):
+        return self.cards_deck.pop(random.randrange(len(self.cards_deck)))
+
+    def get_amount(self):
+        return len(self.cards_deck)
+    
+    def get_card(self):
+        return self.cards_deck.pop()
+    
+    def shuffle (self):
+        random.shuffle(self.cards_deck)
+        
+def get_velocity(start_pos, end_pos):
+    global vel, in_moving
+    in_moving = True
+    vector = [end_pos[0]-start_pos[0], end_pos[1]-start_pos[1]]
+    print vector
+    vel = [vector[0]/120., vector[1]/120.]
+    print vel
+    pass
+    
+
+#define event handlers for buttons
+def deal():
+    global outcome, in_play, player_hand, dealer_hand, player_money, dealer_money 
+    global deck, bank, start, in_moving, deck_card, hand_next_position, deck_card_position
+    
+    start = False
+    
+    if in_play:
+        # player lost
+        dealer_money += bank
+        
+    if player_money <= 0 or dealer_money <=0:
+        outcome = 'Game Over'
+        in_play = False
+        return
+    
+    bank = 2*bet[bet_index]
+    player_money -= bet[bet_index]
+    dealer_money -= bet[bet_index]
+    
+    if deck.get_amount() < 10:
+        
+#        print 'In deck', deck.get_amount(), 'cards'
+        deck = Deck()
+        deck.shuffle()
+#        print 'In deck', deck.get_amount(), 'cards'
+    
+    player_hand = Hand([200, 500])
+    
+    dealer_hand = Hand([200, 100])
+    
+    
+
+    deck_card = Card('Spades', '2', False, deck_loc_center)
+    get_velocity(deck_card.get_location(), player_hand.get_next_position())
+    
+    hand_next_position = player_hand.get_next_position()[:]
+    deck_card_position = deck_card.get_location()[:]
+    print 'hand_next_position',hand_next_position
+    print 'deck_card.get_location()',deck_card.get_location()
+
+    player_hand.add_card(deck.get_card())
+    player_hand.add_card(deck.get_card())
+    
+    dealer_hand.add_card(deck.get_card())
+    dealer_card1 = dealer_hand.get_card(0)
+    
+    dealer_card1.hide_card()
+    dealer_hand.add_card(deck.get_card())
+    
+#    print 'Player value = ', player_hand.get_value()
+    in_play = True
+    outcome = 'Hit or Stand?'
+
+
+def hit():
+    
+    global outcome, in_play, deck, player_money, dealer_money, bank
+    
+    if not in_play:
+        return
+    
+        # if the hand is in play, hit the player
+    
+    
+    player_hand.add_card(deck.get_card())
+        
+        
+    if player_hand.get_value() <= 21:    
+        pass
+#        print 'Player Hit. Values =', player_hand.get_value()
+        
+    # if busted, assign a message to outcome, update in_play and score
+    else:
+        in_play = False
+        dealer_card1 = dealer_hand.get_card(0)
+        dealer_card1.expose_card()
+        
+        outcome = 'You lose!'
+        dealer_money += bank
+        bank = 0
+#        print outcome
+        win_sound.play()
+    
+    
+        return
+    
+   
+
+    
+       
+def stand():
+    global outcome, in_play, deck, player_money, dealer_money, bank
+    
+    # if hand is in play, repeatedly hit dealer until his hand has value 17 or more
+    if not in_play:
+        return
+    
+    dealer_card1 = dealer_hand.get_card(0)
+    dealer_card1.expose_card()
+    while dealer_hand.get_value() < player_hand.get_value():
+        dealer_hand.add_card(deck.get_card())
+    
+#    print 'Dealer value = ', dealer_hand.get_value()
+    # assign a message to outcome, update in_play and score
+    if dealer_hand.get_value() > 21:
+        outcome = 'You won!'
+        player_money += bank
+        bank = 0
+#        print outcome
+        sound.play()
+        
+    else:
+        outcome = 'You lose!'
+        dealer_money += bank
+        bank = 0
+#        print outcome
+        win_sound.play()
+    
+    in_play = False
+    
+# draw handler    
+def draw(canvas):
+    
+   
+    
+    
+    
+    canvas.draw_image(logo_image, logo_center, logo_size, logo_canvas_center, logo_canvas_size)
+    canvas.draw_image(dealer_image, dealer_center, dealer_size, dealer_canvas_center, dealer_canvas_size)
+    canvas.draw_image(player_image, player_center, player_size, player_canvas_center, player_canvas_size)
+
+    canvas.draw_image(bet_image, bet_center[bet_index], bet_size, bet_canvas_center, bet_canvas_size)
+    canvas.draw_image(l_arr_image, l_arr_center, l_arr_size, l_arr_canvas_center, l_arr_canvas_size)
+    canvas.draw_image(r_arr_image, r_arr_center, r_arr_size, r_arr_canvas_center, r_arr_canvas_size)
+
+    canvas.draw_text(str(dealer_money), (660, 220), 40, 'black', "sans-serif")
+    canvas.draw_text(str(player_money), (660, 420), 40, 'black', "sans-serif")
+    canvas.draw_text('Bank: '+str(bank), (640, 60), 30, 'black', "sans-serif")
+    
+    canvas.draw_image(chips_image, chips_center, chips_size, chips1_canvas_center, chips1_canvas_size)
+    canvas.draw_image(chips_image, chips_center, chips_size, chips2_canvas_center, chips2_canvas_size)
+
+    canvas.draw_image(cloud_image, cloud_center, cloud_size, cloud_canvas_center, cloud_canvas_size)
+    canvas.draw_image(cards_image, back_card_image_center, card_image_size, deck_loc_center, (TILE_WIDTH, TILE_HEIGHT))
+    canvas.draw_text('Leonid Myronov', (670, 580), 15, 'black', "sans-serif")        
+    if in_moving:
+        loc = list()
+        loc = deck_card.get_location()
+        loc[0] += vel[0]
+        loc[1] += vel[1]
+        deck_card.update_location(loc)
+    
+         #debug
+        canvas.draw_circle(deck_card.get_location(), 10, 5, 'red', 'red')    
+    if in_play:
+        canvas.draw_circle(hand_next_position, 10, 5, 'red', 'red')    
+    # test to make sure that card.draw works, replace with your code below
+    if start:
+        canvas.draw_text('Blackjack starts!', (cloud_canvas_center[0]-80, cloud_canvas_center[1]), 25, 'red', "sans-serif")
+        canvas.draw_text('Choose your bet', (cloud_canvas_center[0]-70, cloud_canvas_center[1]+35), 20, 'black', "sans-serif")
+        canvas.draw_text("and press 'Deal'", (cloud_canvas_center[0]-65, cloud_canvas_center[1]+70), 20, 'black', "sans-serif")
+    
+    
+            
+    else:
+        canvas.draw_text('Your scores: '+str(player_hand.get_value()), (40, 580), 20, 'black', "sans-serif")
+        if in_play:
+            canvas.draw_text(outcome, (cloud_canvas_center[0]-95, cloud_canvas_center[1]+40), 36, 'black', "sans-serif")
+
+        else:
+            canvas.draw_text("Dealer's scores: "+str(dealer_hand.get_value()), (40, 30), 20, 'black', "sans-serif")
+            if player_money <= 0 or dealer_money <=0:
+                canvas.draw_text(outcome, (cloud_canvas_center[0]-85, cloud_canvas_center[1]+40), 36, 'red', "sans-serif")
+                if player_money <= 0:
+                    canvas.draw_image(money_image, money_center, money_size, money_canvas_center, money_canvas_size)
+            else:
+                canvas.draw_text(outcome, (cloud_canvas_center[0]-75, cloud_canvas_center[1]+10), 40, 'red', "sans-serif")
+                canvas.draw_text('New Deal?', (cloud_canvas_center[0]-50, cloud_canvas_center[1]+45), 25, 'black', "sans-serif")
+                canvas.draw_text('Now you can bet', (cloud_canvas_center[0]-70, cloud_canvas_center[1]+70), 20, 'black', "sans-serif")
+
+
+        player_hand.draw(canvas)
+        dealer_hand.draw(canvas)
+    
+        canvas.draw_circle(hand_next_position, 10, 5, 'red', 'red')    
+    
+# define event handlers
+
+def is_inside (pos, center, size):
+    x = center[0]-size[0]/2 <= pos[0] <= center[0]+size[0]/2
+    y = center[1]-size[1]/2 <= pos[1] <= center[1]+size[1]/2
+    return x and y
+
+def mouseclick(pos):
+    
+    global bet, bet_index
+    
+#    print 'l_arr_center =', l_arr_center 
+#    print 'r_arr_center =', r_arr_center
+#    print 'pos =', pos
+    
+    
+#    if not in_play:
+#        if dealer_hand.get_card(0).is_selected(pos):
+#            dealer_hand.get_card(0).expose_card()
+        
+    if is_inside(pos, r_arr_canvas_center, r_arr_canvas_size):
+        bet_index = (bet_index + 1)%3
+#        print bet_index, bet[
+#        pass
+    # change chip image
+    # change bet value
+        
+    
+    
+    elif is_inside(pos, l_arr_canvas_center, l_arr_canvas_size):
+        bet_index = (bet_index - 1)%3
+#        print bet_index
+#        pass
+    # change chip image
+    # change bet value
+    
+    else:
+        return
+    
+def keydown (key):
+    if in_play:
+#        print 'show cheat'
+        if key == simplegui.KEY_MAP['c']:
+            player_hand.add_card(deck.cards_deck[-1])
+#            print player_hand
+#            print player_hand.get_value()
+
+        
+
+def keyup (key):
+    if in_play:
+        if key == simplegui.KEY_MAP['c']:
+#            print 'hide cheat'
+            player_hand.remove_card()
+#            print player_hand
+#            print player_hand.get_value()
+         
+
+# initialization frame
+frame = simplegui.create_frame("Blackjack", FRAME_WIDTH, FRAME_HEIGHT)
+frame.set_canvas_background("Green")
+
+#create buttons and canvas callback
+frame.add_button("Deal", deal, 200)
+frame.add_label('')
+frame.add_button("Hit",  hit, 200)
+frame.add_label('')
+frame.add_button("Stand", stand, 200)
+frame.add_label('')
+frame.add_label('')
+frame.add_label('')
+frame.add_label('Game Hints:')
+frame.add_label('')
+frame.add_label('You can bet only before new deal. Bet chips are 10, 25, 50.')
+frame.add_label('')
+frame.add_label("If you were busted you can expose dealer's hole card by clicking on it")
+frame.set_draw_handler(draw)
+frame.set_mouseclick_handler(mouseclick)
+frame.set_keydown_handler(keydown)
+frame.set_keyup_handler(keyup)
+
+deck = Deck()
+deck.shuffle()
+# get things rolling
+#deal()
+frame.start()
+
+
+# remember to review the gradic rubric
