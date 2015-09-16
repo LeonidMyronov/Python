@@ -116,8 +116,8 @@ class Ship:
         
         
         # friction
-        self.vel[0] *= .98
-        self.vel[1] *= .98
+        self.vel[0] *= .99
+        self.vel[1] *= .99
                
         
         #rotation
@@ -175,7 +175,9 @@ class Sprite:
         self.pos[1] = (self.pos[1] + self.vel[1])%HEIGHT
         self.angle += self.angle_vel
         pass        
-
+    
+    def is_collide (self, obj):
+        return dist(self.pos, obj.pos) < self.radius + obj.radius
            
 def draw(canvas):
     global time, fire_missile
@@ -193,6 +195,8 @@ def draw(canvas):
     canvas.draw_text("Lives: "+str(lives), (50,50), 20, 'white')
     canvas.draw_text("Score: "+str(score), (WIDTH-120,50), 20, 'white')
     
+    if not start:
+        canvas.draw_image(splash_image, splash_info.get_center(), splash_info.get_size(), (WIDTH / 2, HEIGHT / 2), splash_info.get_size())
     # draw ship and sprites
     my_ship.draw(canvas)
     a_rock.draw(canvas)
@@ -200,6 +204,13 @@ def draw(canvas):
     for missile in a_missile:
         missile.draw(canvas)
         missile.update()
+        if missile.is_collide(a_rock):
+            print 'COLLIDE!'
+            a_missile.remove(missile)
+            canvas.draw_image(explosion_image, explosion_info.get_center(), explosion_info.get_size(), missile.pos, explosion_info.get_size())
+            pass
+#            canvas.draw_image
+        
     
     # update ship and sprites
     my_ship.update()
@@ -209,7 +220,8 @@ def draw(canvas):
 
 
 def keydown(key):
-    global fire_missile, a_missile
+    global fire_missile, a_missile, start
+    start = True
     if key==simplegui.KEY_MAP["left"]:
         my_ship.angle_vel = -0.05
     elif key==simplegui.KEY_MAP["right"]:
@@ -217,11 +229,11 @@ def keydown(key):
     elif key==simplegui.KEY_MAP["space"]:
         
         vel = my_ship.get_vel()
-        print 'vel=', vel
+#        print 'vel=', vel
 #        vel[0] *= 1.5
 #        vel[1] *= 1.5
         point = angle_to_vector(my_ship.get_angle())
-        print 'point:', point
+#        print 'point:', point
         vel = [point[0]*5+vel[0], point[1]*5+vel[1]]
         
 #        print'my_ship.pos=',my_ship.pos
@@ -231,8 +243,8 @@ def keydown(key):
         
         
         
-        a_missile.append(Sprite(point, vel, 0, 0, missile_image, missile_info, missile_sound)        )
-        if len(a_missile) == 2:
+        a_missile.append(Sprite(point, vel, 0, 0, missile_image, missile_info, missile_sound))
+        if len(a_missile) == 6:
             a_missile.pop(0)
             
         fire_missile = True
@@ -282,7 +294,7 @@ frame.set_keydown_handler(keydown)
 frame.set_keyup_handler(keyup)
 
 
-timer = simplegui.create_timer(1000.0, rock_spawner)
+timer = simplegui.create_timer(10000.0, rock_spawner)
 
 # get things rolling
 timer.start()
