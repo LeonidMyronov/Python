@@ -171,8 +171,9 @@ class Sprite:
 #        canvas.draw_circle(self.pos, self.radius, 1, "Red", "Red")
         if self.animated:
             if self.age == self.lifespan:
+                image_center[0] = 64
                 return
-            self.image_center[0] += self.age*self.image_size[0]
+            self.image_center[0] += 128#self.age*self.image_size[0]
             canvas.draw_image(self.image, self.image_center, self.image_size, self.pos, self.image_size, self.angle)
         else:
             canvas.draw_image(self.image, self.image_center, self.image_size, self.pos, self.image_size, self.angle)
