@@ -69,8 +69,10 @@ splash_info = ImageInfo([200, 150], [400, 300])
 splash_image = simplegui.load_image("https://www.dropbox.com/s/jho0d75pc0bkuay/splash.png?dl=1")
 
 # ship image
-ship_info = ImageInfo([45, 45], [90, 90], 35)
-ship_image = simplegui.load_image("https://www.dropbox.com/s/ugtckt68t5r9ubn/double_ship.png?dl=1")
+#ship_info = ImageInfo([45, 45], [90, 90], 35)
+#ship_image = simplegui.load_image("https://www.dropbox.com/s/ugtckt68t5r9ubn/double_ship.png?dl=1")
+ship_info = ImageInfo([64, 64], [128, 128], 35, 0, False, [70, 70])
+ship_image = simplegui.load_image("https://www.dropbox.com/s/ohrbk6ismxatwrm/Republic%20Gunship.png?dl=1")
 
 # missile image - shot1.png, shot2.png, shot3.png
 missile_info = ImageInfo([5,5], [10, 10], 3, 50)
@@ -94,7 +96,7 @@ rocket_explosion_image = simplegui.load_image("https://www.dropbox.com/s/fvbln8z
 # sound assets purchased from sounddogs.com, please do not redistribute
 soundtrack = simplegui.load_sound("https://www.dropbox.com/s/3tn1emhbqmpjj43/soundtrack.mp3?dl=1")
 missile_sound = simplegui.load_sound("https://www.dropbox.com/s/dyz581ar2iq0xwy/missile.mp3?dl=1")
-
+#missile_sound = simplegui.load_sound("https://www.dropbox.com/s/kfysbbjv03ynmu5/vehicle058.mp5?dl=1")
 
 
 #ship_thrust_sound = simplegui.load_sound("https://www.dropbox.com/s/npw2acs6thtytz0/jet.wav?dl=1")
@@ -125,10 +127,11 @@ class Ship:
         self.image_center = info.get_center()
         self.image_size = info.get_size()
         self.radius = info.get_radius()
+        self.canvas_size = info.get_canvas_size()
         
     def draw(self,canvas):
 #        canvas.draw_circle(self.pos, self.radius, 1, "White", "White")
-        canvas.draw_image(self.image, self.image_center, self.image_size, self.pos, self.image_size, self.angle)
+        canvas.draw_image(self.image, self.image_center, self.image_size, self.pos, self.canvas_size, self.angle)
 
     def update(self):
                 # moving
@@ -317,7 +320,7 @@ def keydown(key):
 
     elif key==simplegui.KEY_MAP["up"]:
         
-        my_ship.update_image_pos([90,0])
+        #my_ship.update_image_pos([90,0])
         my_ship.thrust = True
         ship_thrust_sound.play()
         
@@ -329,7 +332,7 @@ def keyup(key):
     elif key==simplegui.KEY_MAP["down"]:
         pass
     elif key==simplegui.KEY_MAP["up"]:
-        my_ship.update_image_pos([-90,0])
+#        my_ship.update_image_pos([-90,0])
         my_ship.thrust = False
 #        print 'x=',math.cos(my_ship.angle)
 #        print 'y=',math.sin(my_ship.angle)
