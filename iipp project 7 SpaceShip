@@ -14,8 +14,10 @@ a_missile = []
 a_rocket = []
 explosions = []
 start = False
+canvas_missile_size = [80, 80]
+canvas_rocket_size = [100, 100]
 class ImageInfo:
-    def __init__(self, center, size, radius = 0, lifespan = None, animated = False, i = 0):
+    def __init__(self, center, size, radius = 0, lifespan = None, animated = False, canvas_size = None, i = 0):
         self.i = i
         self.center = center
         self.size = size
@@ -24,6 +26,12 @@ class ImageInfo:
             self.lifespan = lifespan
         else:
             self.lifespan = float('inf')
+        
+        if canvas_size == None:
+            self.canvas_size = size
+        else:
+            self.canvas_size = canvas_size
+        
         self.animated = animated
 
     def get_center(self):
@@ -31,6 +39,9 @@ class ImageInfo:
 
     def get_size(self):
         return self.size
+    
+    def get_canvas_size(self):
+        return self.canvas_size
 
     def get_radius(self):
         return self.radius
@@ -66,7 +77,7 @@ missile_info = ImageInfo([5,5], [10, 10], 3, 50)
 missile_image = simplegui.load_image("https://www.dropbox.com/s/n2ui4n00bdvs6yq/shot2.png?dl=1")
 
 # missile image - shot1.png, shot2.png, shot3.png
-rocket_info = ImageInfo([10,10], [20, 20], 15, 50)
+rocket_info = ImageInfo([10,10], [20, 20], 7, 50)
 rocket_image = simplegui.load_image("https://www.dropbox.com/s/bmasr0eib0uatwl/shot3.png?dl=1")
 
 # asteroid images - asteroid_blue.png, asteroid_brown.png, asteroid_blend.png
@@ -74,18 +85,26 @@ asteroid_info = ImageInfo([45, 45], [90, 90], 40)
 asteroid_image = simplegui.load_image("https://www.dropbox.com/s/ofcs7pr5k3dkwdb/asteroid_blue.png?dl=1")
 
 # animated explosion - explosion_orange.png, explosion_blue.png, explosion_blue2.png, explosion_alpha.png
-explosion_info = ImageInfo([64, 64], [128, 128], 17, 24, True)
+explosion_info = ImageInfo([64, 64], [128, 128], 17, 24, True, canvas_missile_size)
 explosion_image = simplegui.load_image("https://www.dropbox.com/s/77bz0jmbhpj4i6k/explosion_alpha.png?dl=1")
 
-# sound assets purchased from sounddogs.com, please do not redistribute
-soundtrack = simplegui.load_sound("https://www.dropbox.com/s/tenog8qodonvoas/soundtrack.mp3?dl=1")
-missile_sound = simplegui.load_sound("https://www.dropbox.com/s/co2ckgc1fte7ssj/missile.mp3?dl=1")
+rocket_explosion_info = ImageInfo([65, 97.5], [195, 195], 17, 25, True, canvas_rocket_size)
+rocket_explosion_image = simplegui.load_image("https://www.dropbox.com/s/fvbln8z0ujnivvk/explosion-spritesheet.png?dl=1")
 
-ship_thrust_sound = simplegui.load_sound("https://www.dropbox.com/s/97u9for64fridca/thrust.mp3?dl=1")
-explosion_sound = simplegui.load_sound("https://www.dropbox.com/s/8xsryo1c9z9a57d/explosion.mp3?dl=1")
+# sound assets purchased from sounddogs.com, please do not redistribute
+soundtrack = simplegui.load_sound("https://www.dropbox.com/s/3tn1emhbqmpjj43/soundtrack.mp3?dl=1")
+missile_sound = simplegui.load_sound("https://www.dropbox.com/s/dyz581ar2iq0xwy/missile.mp3?dl=1")
+
+
+
+#ship_thrust_sound = simplegui.load_sound("https://www.dropbox.com/s/npw2acs6thtytz0/jet.wav?dl=1")
+ship_thrust_sound = simplegui.load_sound("https://www.dropbox.com/s/0zi5p1kky8qb2vq/aircraft034.mp3?dl=1")
+explosion_sound = simplegui.load_sound("https://www.dropbox.com/s/q2fjx3mqxhul8x7/explosion.mp3?dl=1")
+rocket_sound = simplegui.load_sound("https://www.dropbox.com/s/6vg0pxca4jwnps1/rocket_launch.mp3?dl=1")
+rocket_exp_sound = simplegui.load_sound("https://www.dropbox.com/s/2b1v3qij34rnyus/rocket_explosion.mp3?dl=1")
 missile_sound.set_volume(.5)
-soundtrack.set_volume(.3)
-ship_thrust_sound.set_volume(1)
+soundtrack.set_volume(.4)
+ship_thrust_sound.set_volume(.8)
 # helper functions to handle transformations
 def angle_to_vector(ang):
     return [math.cos(ang), math.sin(ang)]
@@ -168,7 +187,9 @@ class Sprite:
         self.radius = info.get_radius()
         self.lifespan = info.get_lifespan()
         self.animated = info.get_animated()
+        self.canvas_size = info.get_canvas_size()
         self.age = 0
+        self.pic_to_show = 0
         if sound:
             sound.rewind()
             sound.play()
@@ -183,10 +204,10 @@ class Sprite:
 #                image_center[0] = 64
 #                return
             #self.age*self.image_size[0]
-            canvas.draw_image(self.image, [self.image_center[0]+self.lifespan*128, self.image_center[1]], self.image_size, self.pos, self.image_size, self.angle)
-            self.lifespan -= 1
+            canvas.draw_image(self.image, [self.image_center[0]+self.pic_to_show*self.image_size[0], self.image_center[1]], self.image_size, self.pos, self.canvas_size, self.angle)
+            self.pic_to_show += 1
         else:
-            canvas.draw_image(self.image, self.image_center, self.image_size, self.pos, self.image_size, self.angle)
+            canvas.draw_image(self.image, self.image_center, self.image_size, self.pos, self.canvas_size, self.angle)
     
     
     def update(self):
@@ -200,6 +221,9 @@ class Sprite:
     
     def get_lifespan(self):
         return self.lifespan
+    
+    def stop_slide(self):
+        return not self.pic_to_show - self.lifespan 
            
 def draw(canvas):
     global time, fire_missile
@@ -213,10 +237,7 @@ def draw(canvas):
     canvas.draw_image(debris_image, center, size, (wtime - WIDTH / 2, HEIGHT / 2), (WIDTH, HEIGHT))
     canvas.draw_image(debris_image, center, size, (wtime + WIDTH / 2, HEIGHT / 2), (WIDTH, HEIGHT))
     
-    #draw information
-    canvas.draw_text("Lives: "+str(lives), (50,50), 20, 'white')
-    canvas.draw_text("Score: "+str(score), (WIDTH-120,50), 20, 'white')
-    
+        
     if not start:
         canvas.draw_image(splash_image, splash_info.get_center(), splash_info.get_size(), (WIDTH / 2, HEIGHT / 2), splash_info.get_size())
     # draw ship and sprites
@@ -229,7 +250,7 @@ def draw(canvas):
         if missile.is_collide(a_rock):
             print 'COLLIDE!'
             a_missile.remove(missile)
-            explosions.append(Sprite(missile.pos, (0,0),0,0,explosion_image,explosion_info, explosion_sound))
+            explosions.append(Sprite(missile.pos, (0,0),0,0,explosion_image, explosion_info, explosion_sound))
             print 'expl=',len(explosions)
             pass
 #            canvas.draw_image
@@ -238,6 +259,12 @@ def draw(canvas):
     for rocket in a_rocket:
         rocket.draw(canvas)
         rocket.update()
+        if rocket.is_collide(a_rock):
+            print 'ROCKET COLLIDE!'
+            a_rocket.remove(rocket)
+            explosions.append(Sprite(rocket.pos, (0,0),0,0,rocket_explosion_image,rocket_explosion_info, rocket_exp_sound))
+            print 'expl=',len(explosions)
+        
         
     #draw explosions
     for exp in explosions:
@@ -245,7 +272,7 @@ def draw(canvas):
 #        print exp.pos
         
         exp.draw(canvas)
-        if not exp.get_lifespan():
+        if exp.stop_slide():
             explosions.remove(exp)
         pass
     
@@ -253,7 +280,9 @@ def draw(canvas):
     my_ship.update()
     a_rock.update()
     
-            
+    #draw information
+    canvas.draw_text("Lives: "+str(lives), (50,50), 20, 'white')
+    canvas.draw_text("Score: "+str(score), (WIDTH-120,50), 20, 'white')        
 
 
 def keydown(key):
@@ -284,7 +313,7 @@ def keydown(key):
         vel = [point[0]*3+vel[0], point[1]*3+vel[1]]
         point [0] = point[0]*my_ship.radius+my_ship.pos[0]
         point [1] = point[1]*my_ship.radius+my_ship.pos[1]
-        a_rocket.append(Sprite(point, vel, angle, 0, rocket_image, rocket_info, missile_sound))
+        a_rocket.append(Sprite(point, vel, angle, 0, rocket_image, rocket_info, rocket_sound))
 
     elif key==simplegui.KEY_MAP["up"]:
         
