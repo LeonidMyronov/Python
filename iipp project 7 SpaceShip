@@ -71,8 +71,10 @@ splash_image = simplegui.load_image("https://www.dropbox.com/s/jho0d75pc0bkuay/s
 # ship image
 #ship_info = ImageInfo([45, 45], [90, 90], 35)
 #ship_image = simplegui.load_image("https://www.dropbox.com/s/ugtckt68t5r9ubn/double_ship.png?dl=1")
-ship_info = ImageInfo([64, 64], [128, 128], 35, 0, False, [70, 70])
-ship_image = simplegui.load_image("https://www.dropbox.com/s/ohrbk6ismxatwrm/Republic%20Gunship.png?dl=1")
+#ship_info = ImageInfo([64, 64], [128, 128], 35, 0, False, [70, 70])
+#ship_image = simplegui.load_image("https://www.dropbox.com/s/ohrbk6ismxatwrm/Republic%20Gunship.png?dl=1")
+ship_info = ImageInfo([256, 256], [512, 512], 35, 0, False, [90, 90])
+ship_image = simplegui.load_image("https://www.dropbox.com/s/3iuj654w8iohszg/XWing2.png?dl=1")
 
 # missile image - shot1.png, shot2.png, shot3.png
 missile_info = ImageInfo([5,5], [10, 10], 3, 50)
