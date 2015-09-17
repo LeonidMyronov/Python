@@ -82,7 +82,7 @@ ship1_info = ImageInfo([85, 275], [140, 140], 35, 0, False, [120, 120])
 ship1_image = simplegui.load_image("https://www.dropbox.com/s/uxl8fptbj3mdom0/star_wars_full.png?dl=1")
 
 ship_info = ImageInfo([128, 128], [256, 256], 35, 0, False, [80, 80])
-ship_image = simplegui.load_image("https://www.dropbox.com/s/cyfphhj07qwk3yd/Jonathan-Rey-Star-Wars-Vehicles-Tie-Fighter-02.ico?dl=1")
+ship_image = simplegui.load_image("https://www.dropbox.com/s/odlkei9m1qur8v1/SW-Fighter02.png?dl=1")
 
 # missile image - shot1.png, shot2.png, shot3.png
 missile_info = ImageInfo([5,5], [10, 10], 3, 50)
@@ -131,7 +131,7 @@ class Ship:
         self.pos = [pos[0],pos[1]]
         self.vel = [vel[0],vel[1]]
         self.thrust = False
-        self.angle = angle+3
+        self.angle = angle
         self.angle_vel = 0
         self.image = image
         self.image_center = info.get_center()
