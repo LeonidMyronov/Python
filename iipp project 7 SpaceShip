@@ -71,10 +71,18 @@ splash_image = simplegui.load_image("https://www.dropbox.com/s/jho0d75pc0bkuay/s
 # ship image
 #ship_info = ImageInfo([45, 45], [90, 90], 35)
 #ship_image = simplegui.load_image("https://www.dropbox.com/s/ugtckt68t5r9ubn/double_ship.png?dl=1")
-#ship_info = ImageInfo([64, 64], [128, 128], 35, 0, False, [70, 70])
-#ship_image = simplegui.load_image("https://www.dropbox.com/s/ohrbk6ismxatwrm/Republic%20Gunship.png?dl=1")
-ship_info = ImageInfo([256, 256], [512, 512], 35, 0, False, [90, 90])
-ship_image = simplegui.load_image("https://www.dropbox.com/s/3iuj654w8iohszg/XWing2.png?dl=1")
+#ship1_info = ImageInfo([64, 64], [128, 128], 35, 0, False, [90, 90])
+#ship1_image = simplegui.load_image("https://www.dropbox.com/s/ohrbk6ismxatwrm/Republic%20Gunship.png?dl=1")
+ship2_info = ImageInfo([256, 256], [512, 512], 35, 0, False, [130, 130])
+ship2_image = simplegui.load_image("https://www.dropbox.com/s/3iuj654w8iohszg/XWing2.png?dl=1")
+#ship_info = ImageInfo([225, 130], [110, 110], 35, 0, False, [100, 100])
+#ship_image = simplegui.load_image("https://www.dropbox.com/s/uxl8fptbj3mdom0/star_wars_full.png?dl=1")
+
+ship1_info = ImageInfo([85, 275], [140, 140], 35, 0, False, [120, 120])
+ship1_image = simplegui.load_image("https://www.dropbox.com/s/uxl8fptbj3mdom0/star_wars_full.png?dl=1")
+
+ship_info = ImageInfo([128, 128], [256, 256], 35, 0, False, [80, 80])
+ship_image = simplegui.load_image("https://www.dropbox.com/s/cyfphhj07qwk3yd/Jonathan-Rey-Star-Wars-Vehicles-Tie-Fighter-02.ico?dl=1")
 
 # missile image - shot1.png, shot2.png, shot3.png
 missile_info = ImageInfo([5,5], [10, 10], 3, 50)
@@ -123,7 +131,7 @@ class Ship:
         self.pos = [pos[0],pos[1]]
         self.vel = [vel[0],vel[1]]
         self.thrust = False
-        self.angle = angle
+        self.angle = angle+3
         self.angle_vel = 0
         self.image = image
         self.image_center = info.get_center()
@@ -147,8 +155,8 @@ class Ship:
         
         
         # friction
-        self.vel[0] *= .99
-        self.vel[1] *= .99
+        self.vel[0] *= .98
+        self.vel[1] *= .98
                
         
         #rotation
@@ -247,7 +255,11 @@ def draw(canvas):
         canvas.draw_image(splash_image, splash_info.get_center(), splash_info.get_size(), (WIDTH / 2, HEIGHT / 2), splash_info.get_size())
     # draw ship and sprites
     my_ship.draw(canvas)
+    my_ship1.draw(canvas)
+    my_ship2.draw(canvas)
+
     a_rock.draw(canvas)
+    
 #    if fire_missile:
     for missile in a_missile:
         missile.draw(canvas)
@@ -283,6 +295,9 @@ def draw(canvas):
     
     # update ship and sprites
     my_ship.update()
+    my_ship1.update()
+    my_ship2.update()
+
     a_rock.update()
     
     #draw information
@@ -357,7 +372,8 @@ frame = simplegui.create_frame("Asteroids", WIDTH, HEIGHT)
 # initialize ship and two sprites
 my_ship = Ship([WIDTH / 2, HEIGHT / 2], [0, 0], 0, ship_image, ship_info)
 rock_spawner()
-
+my_ship1 = Ship([WIDTH / 2-200, HEIGHT / 2], [1, 2], 0, ship1_image, ship1_info)
+my_ship2 = Ship([WIDTH / 2+200, HEIGHT / 2], [-2, 1], 0, ship2_image, ship2_info)
 
 # register handlers
 frame.set_draw_handler(draw)
