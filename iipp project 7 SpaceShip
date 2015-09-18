@@ -69,19 +69,28 @@ splash_info = ImageInfo([200, 150], [400, 300])
 splash_image = simplegui.load_image("https://www.dropbox.com/s/jho0d75pc0bkuay/splash.png?dl=1")
 
 # ship image
+#original ship
 #ship_info = ImageInfo([45, 45], [90, 90], 35)
 #ship_image = simplegui.load_image("https://www.dropbox.com/s/ugtckt68t5r9ubn/double_ship.png?dl=1")
+
+#Republic Gunship
 #ship1_info = ImageInfo([64, 64], [128, 128], 35, 0, False, [90, 90])
 #ship1_image = simplegui.load_image("https://www.dropbox.com/s/ohrbk6ismxatwrm/Republic%20Gunship.png?dl=1")
+
+#XWing2
 ship2_info = ImageInfo([256, 256], [512, 512], 35, 0, False, [130, 130])
 ship2_image = simplegui.load_image("https://www.dropbox.com/s/3iuj654w8iohszg/XWing2.png?dl=1")
+
+#yellow spaceship
 #ship_info = ImageInfo([225, 130], [110, 110], 35, 0, False, [100, 100])
 #ship_image = simplegui.load_image("https://www.dropbox.com/s/uxl8fptbj3mdom0/star_wars_full.png?dl=1")
 
+#white spaceship
 ship1_info = ImageInfo([85, 275], [140, 140], 35, 0, False, [120, 120])
 ship1_image = simplegui.load_image("https://www.dropbox.com/s/uxl8fptbj3mdom0/star_wars_full.png?dl=1")
 
-ship_info = ImageInfo([128, 128], [256, 256], 35, 0, False, [80, 80])
+#allien fighter02
+ship_info = ImageInfo([128, 128], [256, 256], 35, 0, False, [70, 70])
 ship_image = simplegui.load_image("https://www.dropbox.com/s/odlkei9m1qur8v1/SW-Fighter02.png?dl=1")
 
 # missile image - shot1.png, shot2.png, shot3.png
@@ -109,8 +118,12 @@ missile_sound = simplegui.load_sound("https://www.dropbox.com/s/dyz581ar2iq0xwy/
 #missile_sound = simplegui.load_sound("https://www.dropbox.com/s/kfysbbjv03ynmu5/vehicle058.mp5?dl=1")
 
 
+
+#original thrust sound
+ship_thrust_sound = simplegui.load_sound("https://www.dropbox.com/s/4m4dzoillb4dqgp/thrust.mp3?dl=1")
+
+#ship_thrust_sound = simplegui.load_sound("https://www.dropbox.com/s/0zi5p1kky8qb2vq/aircraft034.mp3?dl=1")
 #ship_thrust_sound = simplegui.load_sound("https://www.dropbox.com/s/npw2acs6thtytz0/jet.wav?dl=1")
-ship_thrust_sound = simplegui.load_sound("https://www.dropbox.com/s/0zi5p1kky8qb2vq/aircraft034.mp3?dl=1")
 explosion_sound = simplegui.load_sound("https://www.dropbox.com/s/q2fjx3mqxhul8x7/explosion.mp3?dl=1")
 rocket_sound = simplegui.load_sound("https://www.dropbox.com/s/6vg0pxca4jwnps1/rocket_launch.mp3?dl=1")
 rocket_exp_sound = simplegui.load_sound("https://www.dropbox.com/s/2b1v3qij34rnyus/rocket_explosion.mp3?dl=1")
@@ -168,8 +181,8 @@ class Ship:
         #acceleration
         if self.thrust:
             
-            self.vel[0] += vector[0]*.2
-            self.vel[1] += vector[1]*.2
+            self.vel[0] += vector[0]*.15
+            self.vel[1] += vector[1]*.15
         pass
     
     def update_image_pos(self, pos):
@@ -258,30 +271,35 @@ def draw(canvas):
     my_ship1.draw(canvas)
     my_ship2.draw(canvas)
 
-    a_rock.draw(canvas)
+    for rock in a_rock:
+        rock.draw(canvas)
+        rock.update()
     
 #    if fire_missile:
     for missile in a_missile:
         missile.draw(canvas)
         missile.update()
-        if missile.is_collide(a_rock):
-            print 'COLLIDE!'
-            a_missile.remove(missile)
-            explosions.append(Sprite(missile.pos, (0,0),0,0,explosion_image, explosion_info, explosion_sound))
-            print 'expl=',len(explosions)
-            pass
+        for rock in a_rock:
+            if missile.is_collide(rock):
+                print 'COLLIDE!'
+                a_missile.remove(missile)
+                explosions.append(Sprite(missile.pos, (0,0),0,0,explosion_image, explosion_info, explosion_sound))
+                print 'expl=',len(explosions)
+                pass
 #            canvas.draw_image
     #draw rockets
     
     for rocket in a_rocket:
         rocket.draw(canvas)
         rocket.update()
-        if rocket.is_collide(a_rock):
-            print 'ROCKET COLLIDE!'
-            a_rocket.remove(rocket)
-            explosions.append(Sprite(rocket.pos, (0,0),0,0,rocket_explosion_image,rocket_explosion_info, rocket_exp_sound))
-            print 'expl=',len(explosions)
-        
+        for rock in a_rock:
+            if rocket.is_collide(rock):
+            
+                print 'ROCKET COLLIDE!'
+                a_rocket.remove(rocket)
+                explosions.append(Sprite(rocket.pos, (0,0),0,0,rocket_explosion_image,rocket_explosion_info, rocket_exp_sound))
+                print 'expl=',len(explosions)
+
         
     #draw explosions
     for exp in explosions:
@@ -298,7 +316,7 @@ def draw(canvas):
     my_ship1.update()
     my_ship2.update()
 
-    a_rock.update()
+    
     
     #draw information
     canvas.draw_text("Lives: "+str(lives), (50,50), 20, 'white')
@@ -356,15 +374,29 @@ def keyup(key):
         ship_thrust_sound.rewind()
 #        ship_thrust_sound.stop()
 
-# timer handler that spawns a rock            
-def rock_spawner():
-    global a_rock
-    pos = [random.random()*WIDTH*.9+WIDTH*.1, random.random()*HEIGHT*.9+HEIGHT*.1] 
+def get_random_pos():
+    return [random.random()*WIDTH*.9+WIDTH*.1, random.random()*HEIGHT*.9+HEIGHT*.1] 
+    
+    
+def get_random_vel():    
     vel = [random.randrange(1, 5)/10.,random.randrange(1, 5)/10.]
     vel[0] *= random.choice([1, -1])
     vel[1] *= random.choice([1, -1])
-    angle_vel = random.randrange(10)/1000.
-    a_rock = Sprite(pos, vel, 0, angle_vel, asteroid_image, asteroid_info)  
+    return vel
+
+def get_random_angle():    
+    return random.random()/10.
+    
+def get_random_angle_vel():    
+    return random.randrange(10)/500.
+    
+
+# timer handler that spawns a rock            
+def rock_spawner():
+    global a_rock
+    a_rock = []
+    for i in range (3):
+        a_rock.append(Sprite(get_random_pos(), get_random_vel(), 0, get_random_angle_vel(), asteroid_image, asteroid_info)  )
     
 # initialize frame
 frame = simplegui.create_frame("Asteroids", WIDTH, HEIGHT)
@@ -381,7 +413,7 @@ frame.set_keydown_handler(keydown)
 frame.set_keyup_handler(keyup)
 
 
-timer = simplegui.create_timer(1000000.0, rock_spawner)
+timer = simplegui.create_timer(100000.0, rock_spawner)
 
 # get things rolling
 timer.start()
