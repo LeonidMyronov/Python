@@ -267,7 +267,7 @@ class Sprite:
         return self.lifespan - self.age
            
 def draw(canvas):
-    global time, fire_missile
+    global time, fire_missile, lives
     
     # animiate background
     time += 1
@@ -299,22 +299,18 @@ def draw(canvas):
     for missile in my_missile:
         missile.draw(canvas)
         missile.update()
-#        if not missile.is_live():
-#               my_missile.remove(missile)
-#               continue
-        for rock in a_rock:
-            if missile.is_collide(rock):
-                print 'COLLIDE!', len(my_missile)
-                
-                my_missile.remove(missile)
-                a_rock.remove(rock)
-                explosions.add(Sprite(missile.pos, (0,0),0,0,explosion_image, explosion_info, explosion_sound))
-                print 'expl=',len(explosions)
-                pass
-        
 
+    #move to func collide_group_with_group
+#        for rock in a_rock:
+#            if missile.is_collide(rock):
+#                
+#                my_missile.remove(missile)
+#                a_rock.remove(rock)
+#                explosions.add(Sprite(missile.pos, (0,0),0,0,explosion_image, explosion_info, explosion_sound))
+    
+    collide_group_with_group(a_rock, my_missile, explosion_image, explosion_info, explosion_sound)
 
-#            canvas.draw_image
+#  canvas.draw_image
     #draw rockets
     
     for rocket in my_rocket:
@@ -324,16 +320,17 @@ def draw(canvas):
 #        if not rocket.is_live():
 #            my_rocket.remove(rocket)
 #            continue
-        for rock in a_rock:
-            if rocket.is_collide(rock):
-            
-                print 'ROCKET COLLIDE!', len(my_rocket)
-                my_rocket.remove(rocket)
-                a_rock.remove(rock)
-                explosions.add(Sprite(rocket.pos, (0,0),0,0,rocket_explosion_image,rocket_explosion_info, rocket_exp_sound))
-                print 'expl=',len(explosions)
+#        for rock in a_rock:
+#            if rocket.is_collide(rock):
+#            
+##                print 'ROCKET COLLIDE!', len(my_rocket)
+#                my_rocket.remove(rocket)
+#                a_rock.remove(rock)
+#                explosions.add(Sprite(rocket.pos, (0,0),0,0,rocket_explosion_image,rocket_explosion_info, rocket_exp_sound))
+#                print 'expl=',len(explosions)
         
-        
+    collide_group_with_group(a_rock, my_rocket, rocket_explosion_image,rocket_explosion_info, rocket_exp_sound)
+    
     #draw explosions
     for exp in explosions:
         exp.draw(canvas)
@@ -341,7 +338,8 @@ def draw(canvas):
     # update ship and sprites
     my_ship.update()
 
-    
+    if collide_group_with_object(a_rock, my_ship, rocket_explosion_image,rocket_explosion_info, rocket_exp_sound):
+        lives -= 1
     
     #draw information
     canvas.draw_text("Lives: "+str(lives), (50,50), 20, 'white')
@@ -434,8 +432,8 @@ def check_alive_objects(set_obj):
     for obj in set_obj:
         if not obj.is_live():
             remove_set.add(obj)
-    if len(remove_set) > 0:
-        print len(set_obj), len(remove_set)
+#    if len(remove_set) > 0:
+#        print len(set_obj), len(remove_set)
     set_obj.difference_update(remove_set)
     
     pass
@@ -453,9 +451,28 @@ def create_missile_obj(side, obj_type, ship, image, info, sound):
         if obj_type == 'missile':
             my_missile.add(Sprite(point, vel, 0, 0, image, info, sound))
         else: 
+            vel[0] *=.7 
+            vel[1] *=.7
             my_rocket.add(Sprite(point, vel, angle, 0, image, info, sound))
     pass
-        
+
+def collide_group_with_object(set_obj, obj, exp_image, exp_info, exp_sound):
+    temp = False
+    for obj_in_set in set_obj:
+        if obj_in_set.is_collide(obj):
+            temp = obj_in_set
+            break
+    if temp:
+        explosions.add(Sprite(obj.pos, (0,0),0,0,exp_image,exp_info, exp_sound))
+        set_obj.remove(temp)
+        return True
+    return False
+
+def collide_group_with_group(set1_obj, set2_obj, exp_image, exp_info, exp_sound):
+    for obj_in_set2 in set2_obj:
+        collide_group_with_object(set1_obj, obj_in_set2, exp_image, exp_info, exp_sound)
+            
+
 # initialize frame
 frame = simplegui.create_frame("Asteroids", WIDTH, HEIGHT)
 
