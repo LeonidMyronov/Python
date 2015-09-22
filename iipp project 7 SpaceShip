@@ -4,15 +4,15 @@ import math
 import random
 #http://www.codeskulptor.org/#user40_qn9gCMZ42D_0.py
 # globals for user interface
-WIDTH = 1000
-HEIGHT = 800
+WIDTH = 1400
+HEIGHT = 900
 score = 0
 lives = 3
 time = 0
 fire_missile = False
-a_missile = []
-a_rocket = []
-explosions = []
+#a_missile = []
+#a_rocket = []
+#explosions = []
 start = False
 canvas_missile_size = [80, 80]
 canvas_rocket_size = [100, 100]
@@ -22,6 +22,7 @@ my_missile = set()
 my_rocket = set()
 allien_missile = set()
 allien_ship = set()
+explosions = set()
 
 class ImageInfo:
     def __init__(self, center, size, radius = 0, lifespan = None, animated = False, canvas_size = None, i = 0):
@@ -108,7 +109,7 @@ allien_missile_image = simplegui.load_image("https://www.dropbox.com/s/urf501rrm
 
 
 # missile image - shot1.png, shot2.png, shot3.png
-rocket_info = ImageInfo([10,10], [20, 20], 7, 150)
+rocket_info = ImageInfo([10,10], [20, 20], 7, 100)
 rocket_image = simplegui.load_image("https://www.dropbox.com/s/bmasr0eib0uatwl/shot3.png?dl=1")
 
 # asteroid images - asteroid_blue.png, asteroid_brown.png, asteroid_blend.png
@@ -280,29 +281,34 @@ def draw(canvas):
         
     if not start:
         canvas.draw_image(splash_image, splash_info.get_center(), splash_info.get_size(), (WIDTH / 2, HEIGHT / 2), splash_info.get_size())
+
     # draw ship and sprites
     my_ship.draw(canvas)
-    my_ship1.draw(canvas)
-    my_ship2.draw(canvas)
+#    my_ship1.draw(canvas)
+#    my_ship2.draw(canvas)
 
     for rock in a_rock:
         rock.draw(canvas)
         rock.update()
     
+    check_alive_objects(my_missile)
+    check_alive_objects(my_rocket)
+    check_alive_objects(explosions)
+    
 #    if fire_missile:
-    for missile in a_missile:
+    for missile in my_missile:
         missile.draw(canvas)
         missile.update()
-        if not missile.is_live():
-               a_missile.remove(missile)
-               continue
+#        if not missile.is_live():
+#               my_missile.remove(missile)
+#               continue
         for rock in a_rock:
             if missile.is_collide(rock):
-                print 'COLLIDE!', len(a_missile)
+                print 'COLLIDE!', len(my_missile)
                 
-                a_missile.remove(missile)
+                my_missile.remove(missile)
                 a_rock.remove(rock)
-                explosions.append(Sprite(missile.pos, (0,0),0,0,explosion_image, explosion_info, explosion_sound))
+                explosions.add(Sprite(missile.pos, (0,0),0,0,explosion_image, explosion_info, explosion_sound))
                 print 'expl=',len(explosions)
                 pass
         
@@ -311,36 +317,29 @@ def draw(canvas):
 #            canvas.draw_image
     #draw rockets
     
-    for rocket in a_rocket:
+    for rocket in my_rocket:
         rocket.draw(canvas)
         rocket.update()
-        if not rocket.is_live():
-            a_rocket.remove(rocket)
-            continue
+        
+#        if not rocket.is_live():
+#            my_rocket.remove(rocket)
+#            continue
         for rock in a_rock:
             if rocket.is_collide(rock):
             
-                print 'ROCKET COLLIDE!', len(a_rocket)
-                a_rocket.remove(rocket)
+                print 'ROCKET COLLIDE!', len(my_rocket)
+                my_rocket.remove(rocket)
                 a_rock.remove(rock)
-                explosions.append(Sprite(rocket.pos, (0,0),0,0,rocket_explosion_image,rocket_explosion_info, rocket_exp_sound))
+                explosions.add(Sprite(rocket.pos, (0,0),0,0,rocket_explosion_image,rocket_explosion_info, rocket_exp_sound))
                 print 'expl=',len(explosions)
         
         
     #draw explosions
     for exp in explosions:
-#        if exp.i <= exp.lifespan:
-#        print exp.pos
-        
         exp.draw(canvas)
-        if not exp.is_live():
-            explosions.remove(exp)
-        pass
     
     # update ship and sprites
     my_ship.update()
-    my_ship1.update()
-    my_ship2.update()
 
     
     
@@ -348,15 +347,15 @@ def draw(canvas):
     canvas.draw_text("Lives: "+str(lives), (50,50), 20, 'white')
     canvas.draw_text("Score: "+str(score), (WIDTH-120,50), 20, 'white')        
 
-def check_alive_objects(set_obj):
-    
-    
+
 def keydown(key):
     global fire_missile, a_missile, start
     start = True
-    vel = my_ship.get_vel()
-    angle = my_ship.get_angle()
-    point = angle_to_vector(angle)
+    
+    #move to create_missile_obj()
+#    vel = my_ship.get_vel()
+#    angle = my_ship.get_angle()
+#    point = angle_to_vector(angle)
     
         
     if key==simplegui.KEY_MAP["left"]:
@@ -366,20 +365,26 @@ def keydown(key):
         my_ship.angle_vel = 0.05
         
     elif key==simplegui.KEY_MAP["space"]:
-        vel = [point[0]*5+vel[0], point[1]*5+vel[1]]
-        point [0] = point[0]*my_ship.radius+my_ship.pos[0]
-        point [1] = point[1]*my_ship.radius+my_ship.pos[1]
         
-        a_missile.append(Sprite(point, vel, 0, 0, missile_image, missile_info, missile_sound))
-#        if len(a_missile) == 6:
-#            a_missile.pop(0)
+        #move to create_missile_obj()
+#        vel = [point[0]*5+vel[0], point[1]*5+vel[1]]
+#        point [0] = point[0]*my_ship.radius+my_ship.pos[0]
+#        point [1] = point[1]*my_ship.radius+my_ship.pos[1]
+        
+        #create_missile_obj(side, obj_type, ship, image, info, sound)
+        create_missile_obj('my', 'missile', my_ship, missile_image, missile_info, missile_sound)
+        #move to create_missile_obj()
+        #a_missile.append(Sprite(point, vel, 0, 0, missile_image, missile_info, missile_sound))
+
             
     
     elif key==simplegui.KEY_MAP["z"]:
-        vel = [point[0]*3+vel[0], point[1]*3+vel[1]]
-        point [0] = point[0]*my_ship.radius+my_ship.pos[0]
-        point [1] = point[1]*my_ship.radius+my_ship.pos[1]
-        a_rocket.append(Sprite(point, vel, angle, 0, rocket_image, rocket_info, rocket_sound))
+        
+#        vel = [point[0]*3+vel[0], point[1]*3+vel[1]]
+#        point [0] = point[0]*my_ship.radius+my_ship.pos[0]
+#        point [1] = point[1]*my_ship.radius+my_ship.pos[1]
+#        a_rocket.append(Sprite(point, vel, angle, 0, rocket_image, rocket_info, rocket_sound))
+        create_missile_obj('my', 'rocket', my_ship, rocket_image, rocket_info, rocket_sound)
 
     elif key==simplegui.KEY_MAP["up"]:
         
@@ -418,21 +423,47 @@ def get_random_angle():
 def get_random_angle_vel():    
     return random.randrange(10)/500.
     
-
 # timer handler that spawns a rock            
 def rock_spawner():
     global a_rock
     if len(a_rock) < ASTEROIDS_AMOUNT:
         a_rock.add(Sprite(get_random_pos(), get_random_vel(), 0, get_random_angle_vel(), asteroid_image, asteroid_info)  )
+
+def check_alive_objects(set_obj):
+    remove_set = set()
+    for obj in set_obj:
+        if not obj.is_live():
+            remove_set.add(obj)
+    if len(remove_set) > 0:
+        print len(set_obj), len(remove_set)
+    set_obj.difference_update(remove_set)
     
+    pass
+
+def create_missile_obj(side, obj_type, ship, image, info, sound):
+    vel = ship.get_vel()
+    angle = ship.get_angle()
+    point = angle_to_vector(angle)
+    
+    vel = [point[0]*5+vel[0], point[1]*5+vel[1]]
+    point [0] = point[0]*ship.radius+ship.pos[0]
+    point [1] = point[1]*ship.radius+ship.pos[1]
+    
+    if side == 'my':
+        if obj_type == 'missile':
+            my_missile.add(Sprite(point, vel, 0, 0, image, info, sound))
+        else: 
+            my_rocket.add(Sprite(point, vel, angle, 0, image, info, sound))
+    pass
+        
 # initialize frame
 frame = simplegui.create_frame("Asteroids", WIDTH, HEIGHT)
 
 # initialize ship and two sprites
 my_ship = Ship([WIDTH / 2, HEIGHT / 2], [0, 0], 0, ship_image, ship_info)
 rock_spawner()
-my_ship1 = Ship([WIDTH / 2-200, HEIGHT / 2], [1, 2], 0, ship1_image, ship1_info)
-my_ship2 = Ship([WIDTH / 2+200, HEIGHT / 2], [-2, 1], 0, ship2_image, ship2_info)
+#my_ship1 = Ship([WIDTH / 2-200, HEIGHT / 2], [1, 2], 0, ship1_image, ship1_info)
+#my_ship2 = Ship([WIDTH / 2+200, HEIGHT / 2], [-2, 1], 0, ship2_image, ship2_info)
 
 # register handlers
 frame.set_draw_handler(draw)
