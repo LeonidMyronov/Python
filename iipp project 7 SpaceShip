@@ -5,8 +5,8 @@ import random
 #music http://www.grsites.com/archive/sounds/category/8/?offset=0
 
 # globals for user interface
-WIDTH = 1400
-HEIGHT = 900
+WIDTH = 1000
+HEIGHT = 600
 score = 0
 lives = 3
 time = 0
@@ -121,7 +121,7 @@ asteroid_info = ImageInfo([45, 45], [90, 90], 40)
 asteroid_image = simplegui.load_image("https://www.dropbox.com/s/ofcs7pr5k3dkwdb/asteroid_blue.png?dl=1")
 
 #health image
-health_info = ImageInfo([180, 151], [360, 302], 30, 0, False, [50,50])
+health_info = ImageInfo([180, 151], [360, 302], 30, 500, False, [50,50])
 health_image = simplegui.load_image("https://www.dropbox.com/s/nb1jt9vy9rj8pzu/heart.png?dl=1")
 
 # animated explosion - explosion_orange.png, explosion_blue.png, explosion_blue2.png, explosion_alpha.png
@@ -305,7 +305,7 @@ def draw(canvas):
     canvas.draw_text("Lives: "+str(lives), (50,50), 20, 'white')
     canvas.draw_text("Score: "+str(score), (WIDTH-120,50), 20, 'white')  
 #    canvas.draw_text("Next Allien Ship: "+str(8-((start_time/60)%10)), (WIDTH/2,50), 20, 'white')  
-    canvas.draw_text("Leonid Myronov", (WIDTH-150,HEIGHT-30), 15, 'white')  
+    canvas.draw_text("Leonid Myronov", (WIDTH-110,HEIGHT-10), 15, 'white')  
 
 def click(pos):
     global score, lives, time, start
@@ -317,6 +317,9 @@ def click(pos):
     time = 0
     start_time = 0
     soundtrack.play()
+    timer.start()
+    allien_ships_spawn_timer.start()
+    health_timer.start()
     
     
 def keydown(key):
@@ -483,18 +486,22 @@ def stop_game():
     allien_missiles = set()
     allien_ships = set()
     explosions = set()
+    health = set()
 #    my_ship.thrust = False
     ship_thrust_sound.rewind()
     soundtrack.rewind()
     ship_info = ImageInfo([45, 45], [90, 90], 35)
     my_ship = Ship([WIDTH / 2, HEIGHT / 2], [0, 0], 0, ship_image, ship_info)
+    timer.stop()
+    allien_ships_spawn_timer.stop()
+    health_timer.stop()
     
 def health_bonus():
     
     if start == False:
         return
     
-    
+    health.add(Sprite(get_random_pos(), get_random_vel(), get_random_angle(), get_random_angle_vel(), health_image, health_info) )    
     
 def process_sprite_group(canvas):
     global lives, score, time, health
@@ -564,7 +571,7 @@ def process_sprite_group(canvas):
         score += len(rsr) * 100
         my_rocket.difference_update(rsr)
     
-    if collide_group_with_object(health, my_ship, health_image, health_info, grap_sound):
+    if collide_group_with_object(health, my_ship, explosion_image, health_info, grap_sound):
         lives += 1
     
     if lives == 0:
@@ -574,7 +581,7 @@ frame = simplegui.create_frame("Asteroids", WIDTH, HEIGHT)
 
 # initialize ship and two sprites
 my_ship = Ship([WIDTH / 2, HEIGHT / 2], [0, 0], 0, ship_image, ship_info)
-health.add(Sprite(get_random_pos(), get_random_vel(), get_random_angle(), get_random_angle_vel(), health_image, health_info) )
+
 rock_spawner()
 #my_ship1 = Ship([WIDTH / 2-200, HEIGHT / 2], [1, 2], 0, ship1_image, ship1_info)
 #my_ship2 = Ship([WIDTH / 2+200, HEIGHT / 2], [-2, 1], 0, ship2_image, ship2_info)
@@ -588,10 +595,11 @@ frame.set_mouseclick_handler(click)
 allien_ships_spawner()
 timer = simplegui.create_timer(1000.0, rock_spawner)
 allien_ships_spawn_timer = simplegui.create_timer(10000.0, allien_ships_spawner)
-health_timer = simplegui.create_timer(10000.0, health_bonus)
+health_timer = simplegui.create_timer(20000.0, health_bonus)
 
 # get things rolling
 timer.start()
 allien_ships_spawn_timer.start()
+health_timer.start()
 frame.start()
 soundtrack.play()
