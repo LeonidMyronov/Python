@@ -20,10 +20,10 @@ ASTEROIDS_AMOUNT = 12
 a_rock = set()
 my_missile = set()
 my_rocket = set()
-allien_missile = set()
-allien_ship = set()
+allien_missiles = set()
+allien_ships = set()
 explosions = set()
-
+allien_ships_pos = [[100,50], [WIDTH/2,50], [WIDTH-100,50]]
 class ImageInfo:
     def __init__(self, center, size, radius = 0, lifespan = None, animated = False, canvas_size = None, i = 0):
         self.i = i
@@ -98,8 +98,8 @@ ship1_info = ImageInfo([85, 275], [140, 140], 35, 0, False, [120, 120])
 ship1_image = simplegui.load_image("https://www.dropbox.com/s/uxl8fptbj3mdom0/star_wars_full.png?dl=1")
 
 #allien fighter02
-#ship_info = ImageInfo([128, 128], [256, 256], 35, 0, False, [70, 70])
-#ship_image = simplegui.load_image("https://www.dropbox.com/s/odlkei9m1qur8v1/SW-Fighter02.png?dl=1")
+allien_ship_info = ImageInfo([128, 128], [256, 256], 35, 0, False, [70, 70])
+allien_ship_image = simplegui.load_image("https://www.dropbox.com/s/odlkei9m1qur8v1/SW-Fighter02.png?dl=1")
 
 # missile image - shot1.png, shot2.png, shot3.png
 missile_info = ImageInfo([5,5], [10, 10], 3, 100)
@@ -392,7 +392,15 @@ def rock_spawner():
             if dist(pos, my_ship.get_pos()) > 150:
                 break
         a_rock.add(Sprite(pos, get_random_vel(), 0, get_random_angle_vel(), asteroid_image, asteroid_info)  )
-
+        
+        
+def allien_ships_spawner ():
+    global allien_ships
+    #Ship pos, vel, angle, image, info
+    for i in range(len(allien_ships_pos)):
+        allien_ships.add(Ship(allien_ships_pos[i],get_random_vel(),0 ,allien_ship_image, allien_ship_info))
+        
+        
 def check_alive_objects(set_obj):
     remove_set = set()
     for obj in set_obj:
@@ -443,13 +451,13 @@ def collide_group_with_group(set1_obj, set2_obj, exp_image, exp_info, exp_sound)
     return rem_set
 
 def stop_game():
-    global start, a_rock, my_ship, ship_info
+    global start, a_rock, my_ship, ship_info, allien_missiles, allien_ships
     start = False
     a_rock = set()
     my_missile = set()
     my_rocket = set()
-    allien_missile = set()
-    allien_ship = set()
+    allien_missiles = set()
+    allien_ships = set()
     explosions = set()
 #    my_ship.thrust = False
     ship_thrust_sound.rewind()
@@ -476,6 +484,11 @@ def process_sprite_group(canvas):
         rocket.draw(canvas)
         rocket.update()
     
+    for a_s in allien_ships:
+        a_s.draw(canvas)
+#        a_s.thrust = True
+        a_s.update()
+        
     my_ship.draw(canvas)
     my_ship.update()
     
@@ -517,9 +530,11 @@ frame.set_keydown_handler(keydown)
 frame.set_keyup_handler(keyup)
 frame.set_mouseclick_handler(click)
 
-timer = simplegui.create_timer(1000.0, rock_spawner)
+allien_ships_spawner()
+#timer = simplegui.create_timer(1000.0, rock_spawner)
+#allien_ships_spawn_timer = simplegui.create_timer(1000.0, allien_ships_spawner)
 
 # get things rolling
-timer.start()
+#timer.start()
 frame.start()
 soundtrack.play()
