@@ -267,7 +267,7 @@ class Sprite:
         return self.lifespan - self.age
            
 def draw(canvas):
-    global time, fire_missile, lives
+    global time, fire_missile, lives, score
     
     # animiate background
     time += 1
@@ -283,22 +283,29 @@ def draw(canvas):
         canvas.draw_image(splash_image, splash_info.get_center(), splash_info.get_size(), (WIDTH / 2, HEIGHT / 2), splash_info.get_size())
 
     # draw ship and sprites
-    my_ship.draw(canvas)
+    process_sprite_group(canvas)
+    
+#    my_ship.draw(canvas)
+#    my_ship.update()
+    
 #    my_ship1.draw(canvas)
 #    my_ship2.draw(canvas)
-
-    for rock in a_rock:
-        rock.draw(canvas)
-        rock.update()
     
-    check_alive_objects(my_missile)
-    check_alive_objects(my_rocket)
-    check_alive_objects(explosions)
+    #move to process_sprite_group
+#    for rock in a_rock:
+#        rock.draw(canvas)
+#        rock.update()
+        
+    #move to process_sprite_group
+#    check_alive_objects(my_missile)
+#    check_alive_objects(my_rocket)
+#    check_alive_objects(explosions)
     
 #    if fire_missile:
-    for missile in my_missile:
-        missile.draw(canvas)
-        missile.update()
+    #move to process_sprite_group
+#    for missile in my_missile:
+#        missile.draw(canvas)
+#        missile.update()
 
     #move to func collide_group_with_group
 #        for rock in a_rock:
@@ -308,14 +315,19 @@ def draw(canvas):
 #                a_rock.remove(rock)
 #                explosions.add(Sprite(missile.pos, (0,0),0,0,explosion_image, explosion_info, explosion_sound))
     
-    collide_group_with_group(a_rock, my_missile, explosion_image, explosion_info, explosion_sound)
-
+    #rsm - remove_set_missile - set for missiles that collide with rock
+#    rsm = collide_group_with_group(a_rock, my_missile, explosion_image, explosion_info, explosion_sound)
+#    if len(rsm) > 0:
+#        score += len(rsm) * 10
+#        my_missile.difference_update(rsm)
+        
 #  canvas.draw_image
     #draw rockets
     
-    for rocket in my_rocket:
-        rocket.draw(canvas)
-        rocket.update()
+    #move to process_sprite_group
+#    for rocket in my_rocket:
+#        rocket.draw(canvas)
+#        rocket.update()
         
 #        if not rocket.is_live():
 #            my_rocket.remove(rocket)
@@ -329,17 +341,20 @@ def draw(canvas):
 #                explosions.add(Sprite(rocket.pos, (0,0),0,0,rocket_explosion_image,rocket_explosion_info, rocket_exp_sound))
 #                print 'expl=',len(explosions)
         
-    collide_group_with_group(a_rock, my_rocket, rocket_explosion_image,rocket_explosion_info, rocket_exp_sound)
+   
     
+        
     #draw explosions
-    for exp in explosions:
-        exp.draw(canvas)
+#    for exp in explosions:
+#        exp.draw(canvas)
     
     # update ship and sprites
-    my_ship.update()
+    
+    #move to process_sprite_group
+#    my_ship.update()
 
-    if collide_group_with_object(a_rock, my_ship, rocket_explosion_image,rocket_explosion_info, rocket_exp_sound):
-        lives -= 1
+#    if collide_group_with_object(a_rock, my_ship, rocket_explosion_image,rocket_explosion_info, rocket_exp_sound):
+#        lives -= 1
     
     #draw information
     canvas.draw_text("Lives: "+str(lives), (50,50), 20, 'white')
@@ -410,7 +425,7 @@ def get_random_pos():
     
     
 def get_random_vel():    
-    vel = [random.randrange(1, 5)/10.,random.randrange(1, 5)/10.]
+    vel = [random.randrange(1, 10)/10.,random.randrange(1, 10)/10.]
     vel[0] *= random.choice([1, -1])
     vel[1] *= random.choice([1, -1])
     return vel
@@ -469,10 +484,55 @@ def collide_group_with_object(set_obj, obj, exp_image, exp_info, exp_sound):
     return False
 
 def collide_group_with_group(set1_obj, set2_obj, exp_image, exp_info, exp_sound):
+    rem_set = set()
     for obj_in_set2 in set2_obj:
-        collide_group_with_object(set1_obj, obj_in_set2, exp_image, exp_info, exp_sound)
+        if collide_group_with_object(set1_obj, obj_in_set2, exp_image, exp_info, exp_sound):
+            rem_set.add(obj_in_set2)
             
+    return rem_set
 
+def process_sprite_group(canvas):
+    global lives, score
+    
+    for rock in a_rock:
+        rock.draw(canvas)
+        rock.update()
+    
+    for missile in my_missile:
+        missile.draw(canvas)
+        missile.update()
+        
+    for exp in explosions:
+        exp.draw(canvas)
+        
+    for rocket in my_rocket:
+        rocket.draw(canvas)
+        rocket.update()
+    
+    my_ship.draw(canvas)
+    my_ship.update()
+    
+    check_alive_objects(my_missile)
+    check_alive_objects(my_rocket)
+    check_alive_objects(explosions)
+    
+    #rsm - remove_set_missile - set for missiles that collide with rock
+    rsm = collide_group_with_group(a_rock, my_missile, explosion_image, explosion_info, explosion_sound)
+    if len(rsm) > 0:
+        score += len(rsm) * 10
+        my_missile.difference_update(rsm)
+    
+    #rsr - remove_set_rocket - set for rockets that collide with rock
+    rsr = collide_group_with_group(a_rock, my_rocket, rocket_explosion_image,rocket_explosion_info, rocket_exp_sound)
+    if len(rsr) > 0:
+        score += len(rsr) * 10
+        my_rocket.difference_update(rsr)
+        
+        
+    if collide_group_with_object(a_rock, my_ship, rocket_explosion_image,rocket_explosion_info, rocket_exp_sound):
+        lives -= 1
+        
+        
 # initialize frame
 frame = simplegui.create_frame("Asteroids", WIDTH, HEIGHT)
 
