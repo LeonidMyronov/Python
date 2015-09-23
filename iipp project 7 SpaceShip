@@ -23,7 +23,8 @@ my_rocket = set()
 allien_missiles = set()
 allien_ships = set()
 explosions = set()
-allien_ships_pos = [[100,50], [WIDTH/2,50], [WIDTH-100,50]]
+pos = 0
+allien_ships_pos = [[WIDTH*.25,50], [WIDTH/2,50], [WIDTH*.75,50]]
 class ImageInfo:
     def __init__(self, center, size, radius = 0, lifespan = None, animated = False, canvas_size = None, i = 0):
         self.i = i
@@ -214,6 +215,9 @@ class Ship:
     def get_pos(self):
         return self.pos
     
+    def is_collide (self, obj):
+        return dist(self.pos, obj.pos) < self.radius + obj.radius
+    
 # Sprite class
 class Sprite:
     def __init__(self, pos, vel, ang, ang_vel, image, info, sound = None):
@@ -376,7 +380,7 @@ def get_random_vel():
     return vel
 
 def get_random_angle():    
-    return random.random()/10.
+    return random.random()/10.* random.choice([1, -1])
     
 def get_random_angle_vel():    
     return random.randrange(10)/500.
@@ -395,11 +399,14 @@ def rock_spawner():
         
         
 def allien_ships_spawner ():
-    global allien_ships
+    if start == False:
+        return
+    global allien_ships, pos
+    
     #Ship pos, vel, angle, image, info
-    for i in range(len(allien_ships_pos)):
-        allien_ships.add(Ship(allien_ships_pos[i],get_random_vel(),0 ,allien_ship_image, allien_ship_info))
-        
+    #for i in range(len(allien_ships_pos)):
+    allien_ships.add(Ship(allien_ships_pos[pos],get_random_vel(), get_random_angle()*10 ,allien_ship_image, allien_ship_info))
+    pos = (pos+1)%len(allien_ships_pos)
         
 def check_alive_objects(set_obj):
     remove_set = set()
@@ -425,10 +432,12 @@ def create_missile_obj(side, obj_type, ship, image, info, sound):
         if obj_type == 'missile':
             my_missile.add(Sprite(point, vel, 0, 0, image, info, sound))
         else: 
-            vel[0] *=.7 
-            vel[1] *=.7
+            vel[0] *=.9 
+            vel[1] *=.9
             my_rocket.add(Sprite(point, vel, angle, 0, image, info, sound))
-    pass
+    else:
+        allien_missiles.add(Sprite(point, vel, 0, 0, image, info, sound))
+        pass
 
 def collide_group_with_object(set_obj, obj, exp_image, exp_info, exp_sound):
     temp = False
@@ -467,7 +476,7 @@ def stop_game():
     
     
 def process_sprite_group(canvas):
-    global lives, score
+    global lives, score, time
     
     for rock in a_rock:
         rock.draw(canvas)
@@ -476,6 +485,10 @@ def process_sprite_group(canvas):
     for missile in my_missile:
         missile.draw(canvas)
         missile.update()
+
+    for missile in allien_missiles:
+        missile.draw(canvas)
+        missile.update()    
         
     for exp in explosions:
         exp.draw(canvas)
@@ -486,13 +499,18 @@ def process_sprite_group(canvas):
     
     for a_s in allien_ships:
         a_s.draw(canvas)
-#        a_s.thrust = True
+        a_s.thrust = True
         a_s.update()
+        if not time%150.:
+            a_s.angle += get_random_angle()*10
+        if not time%300.:
+            create_missile_obj('allien', 'missile', a_s, allien_missile_image, missile_info, missile_sound)
         
     my_ship.draw(canvas)
     my_ship.update()
     
     check_alive_objects(my_missile)
+    check_alive_objects(allien_missiles)
     check_alive_objects(my_rocket)
     check_alive_objects(explosions)
     
@@ -511,10 +529,17 @@ def process_sprite_group(canvas):
         
     if collide_group_with_object(a_rock, my_ship, rocket_explosion_image,rocket_explosion_info, rocket_exp_sound):
         lives -= 1
-        if lives == 0:
-            stop_game()
         
-        
+    if collide_group_with_object(allien_missiles, my_ship, rocket_explosion_image,rocket_explosion_info, rocket_exp_sound):
+        lives -= 1
+    
+    rsr = collide_group_with_group(allien_ships, my_rocket, rocket_explosion_image,rocket_explosion_info, rocket_exp_sound)
+    if len(rsr) > 0:
+        score += len(rsr) * 100
+        my_rocket.difference_update(rsr)
+    
+    if lives == 0:
+        stop_game()        
 # initialize frame
 frame = simplegui.create_frame("Asteroids", WIDTH, HEIGHT)
 
@@ -531,10 +556,11 @@ frame.set_keyup_handler(keyup)
 frame.set_mouseclick_handler(click)
 
 allien_ships_spawner()
-#timer = simplegui.create_timer(1000.0, rock_spawner)
-#allien_ships_spawn_timer = simplegui.create_timer(1000.0, allien_ships_spawner)
+timer = simplegui.create_timer(1000.0, rock_spawner)
+allien_ships_spawn_timer = simplegui.create_timer(10000.0, allien_ships_spawner)
 
 # get things rolling
-#timer.start()
+timer.start()
+allien_ships_spawn_timer.start()
 frame.start()
 soundtrack.play()
