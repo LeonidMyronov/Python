@@ -26,8 +26,10 @@ allien_missiles = set()
 allien_ships = set()
 explosions = set()
 health = set()
+#start position for alien ships
 pos = 0
 allien_ships_pos = [[WIDTH*.25,50], [WIDTH/2,50], [WIDTH*.75,50]]
+
 class ImageInfo:
     def __init__(self, center, size, radius = 0, lifespan = None, animated = False, canvas_size = None, i = 0):
         self.i = i
@@ -128,6 +130,7 @@ health_image = simplegui.load_image("https://www.dropbox.com/s/nb1jt9vy9rj8pzu/h
 explosion_info = ImageInfo([64, 64], [128, 128], 17, 24, True, canvas_missile_size)
 explosion_image = simplegui.load_image("https://www.dropbox.com/s/77bz0jmbhpj4i6k/explosion_alpha.png?dl=1")
 
+# animated explosion
 rocket_explosion_info = ImageInfo([65, 97.5], [195, 195], 17, 25, True, canvas_rocket_size)
 rocket_explosion_image = simplegui.load_image("https://www.dropbox.com/s/fvbln8z0ujnivvk/explosion-spritesheet.png?dl=1")
 
@@ -135,8 +138,6 @@ rocket_explosion_image = simplegui.load_image("https://www.dropbox.com/s/fvbln8z
 soundtrack = simplegui.load_sound("https://www.dropbox.com/s/3tn1emhbqmpjj43/soundtrack.mp3?dl=1")
 missile_sound = simplegui.load_sound("https://www.dropbox.com/s/dyz581ar2iq0xwy/missile.mp3?dl=1")
 #missile_sound = simplegui.load_sound("https://www.dropbox.com/s/kfysbbjv03ynmu5/vehicle058.mp5?dl=1")
-
-
 
 #original thrust sound
 ship_thrust_sound = simplegui.load_sound("https://www.dropbox.com/s/4m4dzoillb4dqgp/thrust.mp3?dl=1")
@@ -152,10 +153,12 @@ soundtrack.set_volume(.4)
 ship_thrust_sound.set_volume(.4)
 rocket_sound.set_volume(.4)
 rocket_exp_sound.set_volume(.4)
+
 # helper functions to handle transformations
 def angle_to_vector(ang):
     return [math.cos(ang), math.sin(ang)]
 
+#helper function that calculates distance
 def dist(p,q):
     return math.sqrt((p[0] - q[0]) ** 2+(p[1] - q[1]) ** 2)
 
@@ -186,8 +189,6 @@ class Ship:
         self.pos[1] = (self.pos[1] + self.vel[1])%HEIGHT
 #        print 'self.pos[0]:', self.pos[0]
 #        print 'self.pos[1]:', self.pos[1]
-        
-        
         
         # friction
         self.vel[0] *= .98
@@ -307,6 +308,7 @@ def draw(canvas):
 #    canvas.draw_text("Next Allien Ship: "+str(8-((start_time/60)%10)), (WIDTH/2,50), 20, 'white')  
     canvas.draw_text("Leonid Myronov", (WIDTH-110,HEIGHT-10), 15, 'white')  
 
+# new game initialization    
 def click(pos):
     global score, lives, time, start
     if start:
@@ -321,7 +323,7 @@ def click(pos):
     allien_ships_spawn_timer.start()
     health_timer.start()
     
-    
+#my_ship controls
 def keydown(key):
     global fire_missile, a_missile, start
     if not start:
@@ -333,13 +335,14 @@ def keydown(key):
 #    angle = my_ship.get_angle()
 #    point = angle_to_vector(angle)
     
-        
+    #turn left    
     if key==simplegui.KEY_MAP["left"]:
         my_ship.angle_vel = -0.05
-        
+    #turn right    
     elif key==simplegui.KEY_MAP["right"]:
         my_ship.angle_vel = 0.05
-        
+    
+    #launch missile
     elif key==simplegui.KEY_MAP["space"]:
         
         #move to create_missile_obj()
@@ -353,7 +356,7 @@ def keydown(key):
         #a_missile.append(Sprite(point, vel, 0, 0, missile_image, missile_info, missile_sound))
 
             
-    
+    #launch rocket
     elif key==simplegui.KEY_MAP["z"]:
         
 #        vel = [point[0]*3+vel[0], point[1]*3+vel[1]]
@@ -362,12 +365,14 @@ def keydown(key):
 #        a_rocket.append(Sprite(point, vel, angle, 0, rocket_image, rocket_info, rocket_sound))
         create_missile_obj('my', 'rocket', my_ship, rocket_image, rocket_info, rocket_sound)
 
+    # accelerate
     elif key==simplegui.KEY_MAP["up"]:
         
         my_ship.update_image_pos([90,0])
         my_ship.thrust = True
         ship_thrust_sound.play()
-        
+
+        # release pressed buttons        
 def keyup(key):
     if not start:
         return
@@ -413,7 +418,7 @@ def rock_spawner():
                 break
         a_rock.add(Sprite(pos, get_random_vel(), 0, get_random_angle_vel(), asteroid_image, asteroid_info)  )
         
-        
+#function adds alien ship        
 def allien_ships_spawner ():
     if start == False:
         return
@@ -425,6 +430,7 @@ def allien_ships_spawner ():
         allien_ships.add(Ship(allien_ships_pos[pos],get_random_vel(), get_random_angle()*20 ,allien_ship_image, allien_ship_info))
         pos = (pos+1)%len(allien_ships_pos)
         
+# function for animated sprite or sprite that has life limit
 def check_alive_objects(set_obj):
     remove_set = set()
     for obj in set_obj:
@@ -436,6 +442,7 @@ def check_alive_objects(set_obj):
     
     pass
 
+#fuction creates missile object for me and aliens
 def create_missile_obj(side, obj_type, ship, image, info, sound):
     vel = ship.get_vel()
     angle = ship.get_angle()
@@ -457,6 +464,9 @@ def create_missile_obj(side, obj_type, ship, image, info, sound):
         allien_missiles.add(Sprite(point, vel, 0, 0, image, info, sound))
         pass
 
+# function checks collisions between object and group.
+# One from group that collides - is removed from its set.
+# At the collision point explosion creates
 def collide_group_with_object(set_obj, obj, exp_image, exp_info, exp_sound):
     temp = False
     for obj_in_set in set_obj:
@@ -469,6 +479,8 @@ def collide_group_with_object(set_obj, obj, exp_image, exp_info, exp_sound):
         return True
     return False
 
+#function checks collisions between two groups.
+#Returns set of group2 objects that collide 
 def collide_group_with_group(set1_obj, set2_obj, exp_image, exp_info, exp_sound):
     rem_set = set()
     for obj_in_set2 in set2_obj:
@@ -477,6 +489,7 @@ def collide_group_with_group(set1_obj, set2_obj, exp_image, exp_info, exp_sound)
             
     return rem_set
 
+# function delete all sets and initialize variables to start state
 def stop_game():
     global start, a_rock, my_ship, ship_info, allien_missiles, allien_ships
     start = False
@@ -496,6 +509,7 @@ def stop_game():
     allien_ships_spawn_timer.stop()
     health_timer.stop()
     
+#function adds heath bonus at random posiotion
 def health_bonus():
     
     if start == False:
@@ -503,6 +517,7 @@ def health_bonus():
     
     health.add(Sprite(get_random_pos(), get_random_vel(), get_random_angle(), get_random_angle_vel(), health_image, health_info) )    
     
+#game calculations and lohika
 def process_sprite_group(canvas):
     global lives, score, time, health
     
@@ -529,8 +544,10 @@ def process_sprite_group(canvas):
         a_s.draw(canvas)
         a_s.thrust = True
         a_s.update()
+        #every 150 frames alien ship changes its rotation 
         if not time%150.:
             a_s.angle += get_random_angle()*10
+        #every 200 frames alien ship shoots
         if not time%200.:
             create_missile_obj('allien', 'missile', a_s, allien_missile_image, missile_info, missile_sound)
     
@@ -551,26 +568,31 @@ def process_sprite_group(canvas):
     rsm = collide_group_with_group(a_rock, my_missile, explosion_image, explosion_info, explosion_sound)
     if len(rsm) > 0:
         score += len(rsm) * 10
+        #delete set that collides from missile set
         my_missile.difference_update(rsm)
     
     #rsr - remove_set_rocket - set for rockets that collide with rock
     rsr = collide_group_with_group(a_rock, my_rocket, rocket_explosion_image,rocket_explosion_info, rocket_exp_sound)
     if len(rsr) > 0:
         score += len(rsr) * 10
+        #delete set that collides from rocket set
         my_rocket.difference_update(rsr)
         
-        
+    #if ship collides rock it lose 1 life
     if collide_group_with_object(a_rock, my_ship, rocket_explosion_image,rocket_explosion_info, rocket_exp_sound):
         lives -= 1
-        
+    
+    #if ship collides alien missile it lose 1 life
     if collide_group_with_object(allien_missiles, my_ship, rocket_explosion_image,rocket_explosion_info, rocket_exp_sound):
         lives -= 1
     
+    # collision rockets with alien ships
     rsr = collide_group_with_group(allien_ships, my_rocket, rocket_explosion_image,rocket_explosion_info, rocket_exp_sound)
     if len(rsr) > 0:
         score += len(rsr) * 100
         my_rocket.difference_update(rsr)
     
+    #my_ship grab health
     if collide_group_with_object(health, my_ship, explosion_image, health_info, grap_sound):
         lives += 1
     
