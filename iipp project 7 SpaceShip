@@ -18,7 +18,8 @@ fire_missile = False
 start = False
 canvas_missile_size = [80, 80]
 canvas_rocket_size = [100, 100]
-ASTEROIDS_AMOUNT = 2
+ASTEROIDS_AMOUNT = 12
+ALIENS_AMOUNT = 5
 a_rock = set()
 my_missile = set()
 my_rocket = set()
@@ -426,7 +427,7 @@ def allien_ships_spawner ():
     
     #Ship pos, vel, angle, image, info
     #for i in range(len(allien_ships_pos)):
-    if len(allien_ships) < 5:
+    if len(allien_ships) < ALIENS_AMOUNT:
         allien_ships.add(Ship(allien_ships_pos[pos],get_random_vel(), get_random_angle()*20 ,allien_ship_image, allien_ship_info))
         pos = (pos+1)%len(allien_ships_pos)
         
