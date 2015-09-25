@@ -31,6 +31,8 @@ health = set()
 pos = 0
 allien_ships_pos = [[WIDTH*.25,50], [WIDTH/2,50], [WIDTH*.75,50]]
 
+health_time = 20
+alien_time = 10
 class ImageInfo:
     def __init__(self, center, size, radius = 0, lifespan = None, animated = False, canvas_size = None, i = 0):
         self.i = i
@@ -282,11 +284,13 @@ class Sprite:
         return self.lifespan - self.age
            
 def draw(canvas):
-    global time, fire_missile, lives, score, start_time
+    global time, fire_missile, lives, score, start_time, timer1,alien_time,health_time
     
     # animiate background
     if start:
         start_time+=1
+        
+        
     time += 1
     wtime = (time / 4) % WIDTH
     center = debris_info.get_center()
@@ -306,14 +310,17 @@ def draw(canvas):
     #draw information
     canvas.draw_text("Lives: "+str(lives), (50,50), 20, 'white')
     canvas.draw_text("Score: "+str(score), (WIDTH-120,50), 20, 'white')  
-#    canvas.draw_text("Next Allien Ship: "+str(8-((start_time/60)%10)), (WIDTH/2,50), 20, 'white')  
+    if start:
+        canvas.draw_text("Next Allien Ship: "+str(alien_time-(timer1)%alien_time), (WIDTH/2-200,50), 20, 'white')  
+        canvas.draw_text("Bonus : "+str(health_time-(timer1)%health_time), (WIDTH/2+100,50), 20, 'white')  
     canvas.draw_text("Leonid Myronov", (WIDTH-110,HEIGHT-10), 15, 'white')  
 
 # new game initialization    
 def click(pos):
-    global score, lives, time, start
+    global score, lives, time, start, timer1
     if start:
         return
+    timer1 = 0
     start = True
     score = 0
     lives = 3
@@ -409,9 +416,11 @@ def get_random_angle_vel():
     
 # timer handler that spawns a rock            
 def rock_spawner():
-    global a_rock
+    global a_rock, timer1
     if start == False:
         return
+    timer1 += 1
+#    print timer1
     if len(a_rock) < ASTEROIDS_AMOUNT:
         while True:
             pos = get_random_pos()
@@ -637,12 +646,10 @@ frame.add_label('Can you get more? ;)')
                 
 allien_ships_spawner()
 timer = simplegui.create_timer(1000.0, rock_spawner)
-allien_ships_spawn_timer = simplegui.create_timer(10000.0, allien_ships_spawner)
-health_timer = simplegui.create_timer(20000.0, health_bonus)
+allien_ships_spawn_timer = simplegui.create_timer(alien_time*1000, allien_ships_spawner)
+health_timer = simplegui.create_timer(health_time*1000, health_bonus)
 
 # get things rolling
-timer.start()
-allien_ships_spawn_timer.start()
-health_timer.start()
+
 frame.start()
 soundtrack.play()
