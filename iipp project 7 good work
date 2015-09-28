@@ -1,0 +1,849 @@
+# Some Variation of Rice Rocks
+
+# Please evaluate this in the default mode it starts in.
+
+# If you evaluate it after pressing the enhanced mode buttons, it may fail
+# some of the grading criteria, because it works a bit differently.  But
+# otherwise, play with it and have fun!  It was fun to make.
+
+# This is a little messy, if I had more time, I would refactor some things
+# and clean it up.  I've tried to comment things to help make it more
+# understandable if you choose to look through it.
+
+
+import simplegui
+import math
+import random
+import time
+
+# globals for user interface
+WIDTH = 800
+HEIGHT = 600
+level = 1
+time_t = 0
+started = False
+
+mode = 'class'  # can also be 'extended'
+friction = True # used for low/high friction modes
+mute = False    # mute sound
+
+# I made a couple changes to the image info class, so I could have it return
+# image centers for animated sprites based on an index. 
+#
+# I also added a scale factor to get_size and get_radius to make it easier to
+# scale images
+class ImageInfo:
+    def __init__(self, center, size, radius = 0, lifespan = None, animated = False):
+        self.center = center
+        self.size = size
+        self.radius = radius
+        if lifespan:
+            self.lifespan = lifespan
+        else:
+            self.lifespan = float('inf')
+        self.animated = animated
+
+    def get_center(self, idx=(0, 0)):
+        return (self.center[0] + (self.size[0] * idx[0]), self.center[1] + (self.size[1] * idx[1]))
+
+    def get_size(self, scale=1.0):
+        return self.size if scale == 1.0 else (self.size[0] * scale, self.size[1] * scale)
+
+    def get_radius(self, scale=1.0):
+        return self.radius if scale == 1.0 else (self.radius * scale)
+
+    def get_lifespan(self): return self.lifespan
+    def get_animated(self): return self.animated
+
+
+# This class acts mostly like the class returned by simplegui.load_image
+# If __init__ n is set to a value greater than 1 it loads multiple copies of a sound
+# which it plays one after each other, so in the case of an explosion sound,
+# if a second sound needs to be started before the first is finished, it will
+# play a second copy of the sound so the first explosion sound isn't cut off.
+class MultiSound:
+    def __init__(self, n, url, volume=1):
+        self.sound = []
+        while n > 0:
+            self.sound.append(simplegui.load_sound(url))
+            n -= 1
+        self.index = 0
+        self.set_volume(volume)
+        self.set_mute(False)
+        
+    def set_volume(self, volume):
+        self.volume = volume
+    
+    def set_mute(self, value):
+        self.mute = value
+        vol = 0 if value else self.volume        
+        for s in self.sound:
+            s.set_volume(vol)
+        
+    def rewind(self):
+        pass 
+    
+    def play(self, volume=None):
+        if self.mute:
+            volume = 0
+        elif not volume:
+            volume = self.volume
+        self.sound[self.index].set_volume(volume)
+        self.sound[self.index].play()
+        self.index = (self.index + 1) % len(self.sound)
+        
+    def pause(self):
+        for s in self.sound:
+            s.pause()
+    
+# art assets created by Kim Lathrop, may be freely re-used in non-commercial projects, please credit Kim
+    
+# debris images - debris1_brown.png, debris2_brown.png, debris3_brown.png, debris4_brown.png
+#                 debris1_blue.png, debris2_blue.png, debris3_blue.png, debris4_blue.png, debris_blend.png
+debris_info = ImageInfo([320, 240], [640, 480])
+debris_image = simplegui.load_image("http://commondatastorage.googleapis.com/codeskulptor-assets/lathrop/debris2_blue.png")
+
+# nebula images - nebula_brown.png, nebula_blue.png
+nebula_info = ImageInfo([400, 300], [800, 600])
+nebula_image = simplegui.load_image("http://commondatastorage.googleapis.com/codeskulptor-assets/lathrop/nebula_blue.f2014.png")
+
+# splash image
+splash_info = ImageInfo([200, 150], [400, 300])
+splash_image = simplegui.load_image("http://commondatastorage.googleapis.com/codeskulptor-assets/lathrop/splash.png")
+
+# ship image
+ship_info = ImageInfo([45, 45], [90, 90], 35)
+ship_image = simplegui.load_image("http://commondatastorage.googleapis.com/codeskulptor-assets/lathrop/double_ship.png")
+
+# missile image - shot1.png, shot2.png, shot3.png
+missile_info = ImageInfo([5,5], [10, 10], 3, 1.2)
+missile_image = simplegui.load_image("http://commondatastorage.googleapis.com/codeskulptor-assets/lathrop/shot2.png")
+
+# asteroid images - asteroid_blue.png, asteroid_brown.png, asteroid_blend.png
+asteroid_info = ImageInfo([45, 45], [90, 90], 40)
+asteroid_image = simplegui.load_image("http://commondatastorage.googleapis.com/codeskulptor-assets/lathrop/asteroid_blue.png")
+
+# animated explosion - explosion_orange.png, explosion_blue.png, explosion_blue2.png, explosion_alpha.png
+explosion_info = ImageInfo([64, 64], [128, 128], 17, 24, True)
+explosion_image = simplegui.load_image("http://commondatastorage.googleapis.com/codeskulptor-assets/lathrop/explosion_alpha.png")
+
+# sound assets purchased from sounddogs.com, please do not redistribute
+soundtrack = MultiSound(1, "http://commondatastorage.googleapis.com/codeskulptor-assets/sounddogs/soundtrack.mp3")
+ship_thrust_sound = MultiSound(1, "http://commondatastorage.googleapis.com/codeskulptor-assets/sounddogs/thrust.mp3")
+missile_sound = MultiSound(5, "http://commondatastorage.googleapis.com/codeskulptor-assets/sounddogs/missile.mp3", .5)
+explosion_sound = MultiSound(5, "http://commondatastorage.googleapis.com/codeskulptor-assets/sounddogs/explosion.mp3")
+
+sounds = [ soundtrack, ship_thrust_sound, missile_sound, explosion_sound ]
+
+# Timer - 
+# this allows calculation of velocity accelleration, etc using real time,
+# rather than the assumption that updates are called every 1/60th of a second.
+# if updates are called at different rates, the movement of objects remains
+# constant, because distances are calculated from speed and time.
+class Timer:
+    def __init__(self):
+        self.start = time.time()
+        self.last = self.start
+        self.dt = 0
+
+    def update(self):
+        now = time.time()
+        self.dt = now - self.last
+        self.last = now
+
+    def last(self):  return self.last
+    def delta(self): return self.dt
+    def age(self):   return time.time() - self.start
+    
+    
+# Sprite class
+class Sprite(Timer):
+    def __init__(self, pos, vel, ang, ang_vel, image, info, sound = None):
+        global sound_list
+        Timer.__init__(self)
+        self.pos = [pos[0],pos[1]]
+        self.vel = [vel[0],vel[1]]
+        self.angle = ang
+        self.angle_vel = ang_vel
+        self.image = image
+        self.info = info
+        self.index = (0, 0)
+        self.sound = sound
+        self.friction = 0
+        self.scale = 1
+        
+    def get_pos(self):  return self.pos
+    def get_vel(self):  return self.vel
+    def get_info(self): return self.info
+    def get_ang(self):  return self.angle
+    def get_time(self): return self.time
+    def vector(self):   return [ math.cos(self.angle), math.sin(self.angle) ]
+    def get_radius(self): return self.info.get_radius(self.scale)
+    
+    def play_sound(self, volume=None):
+        if self.sound:
+            self.sound.rewind()
+            self.sound.play(volume)
+            
+    def set_index(self, i=0, j=0): self.index = (i, j)
+    def set_friction(self, f):     self.coefficient_of_friction = f
+    def get_scale(self):           return self.scale
+    def set_scale(self, scale):    self.scale = scale
+
+    def dist_to_pos(self, pos):
+        return math.sqrt((self.pos[0] - pos[0]) ** 2+(self.pos[1] - pos[1]) ** 2)
+    
+    def dist(self, other):
+        return self.dist_to_pos(other.get_pos())
+        
+    def collide(self, other):
+        radius_sum = self.get_radius() + other.get_radius()
+        return self.dist(other) - radius_sum < 0
+
+    # wrap is used by draw to calculate when a sprite is leaving one side of the
+    # screen so a second image can be drawn to show it appearing on the other 
+    # side.  So it doesn't disappear from one side and show up on the other
+    # side already half way.
+    def wrap(self, pos, size, dim):
+        center = dim/2
+        if pos < center and ((pos - size/2) % dim) > center: # wrapping left/top edge
+            return pos + dim
+        elif pos > center and ((pos + size/2) % dim) < center: # wrapping right/bottom edge
+            return pos - dim
+        return None
+        
+    def draw(self, canvas):
+        size = self.info.get_size(self.scale)
+
+        # make images wrap screen properly
+        x = self.wrap(self.pos[0], size[0], WIDTH)
+        y = self.wrap(self.pos[1], size[1], HEIGHT)
+
+        # x and y have a value off the screen on the opposite side if the object is wrapping the screen.
+        # depending on if x or y or both have a value, draw the object in the correct spot (possibly multiple
+        # times) to display it as it wraps the screen.
+        canvas.draw_image(self.image, self.info.get_center(self.index), self.info.get_size(), self.pos, size, self.angle)
+        if x: canvas.draw_image(self.image, self.info.get_center(self.index), self.info.get_size(), (x, self.pos[1]), size, self.angle)
+        if y: canvas.draw_image(self.image, self.info.get_center(self.index), self.info.get_size(), (self.pos[0], y), size, self.angle)
+        if x and y:
+            canvas.draw_image(self.image, self.info.get_center(self.index), self.info.get_size(), (x, y), size, self.angle)
+
+    # every object drawn on the screen is a sprite (even the ship in this version)
+    # Sprite update updates the physics for the objects.  All the objects angle
+    # velocity, position are updated here.
+    def update(self):
+        Timer.update(self)
+        dt = self.delta()
+        self.angle += self.angle_vel * dt
+        self.vel = (self.vel[0] * (1 - self.friction), self.vel[1] * (1 - self.friction))
+        self.pos = ((self.pos[0] + self.vel[0] * dt) % WIDTH, (self.pos[1] + self.vel[1] * dt) % HEIGHT)
+
+        
+# Explosion Class
+class Explosion(Sprite):
+    # set the angle and ang_vel randomly, so explosions show up a little differntly
+    def __init__(self, obj):
+        ang = random.randrange(0,620) / 100.0
+        ang_vel = random.randrange(2,6) / 10.0 * [1, -1][random.randrange(0,2)]
+        Sprite.__init__(self, obj.get_pos(), obj.get_vel(), ang, ang_vel, explosion_image, explosion_info, explosion_sound)
+        # the object passed in to __init__ is used to determine how bit and
+        # how loud to make the explosion
+        self.play_sound(obj.volume())
+        self.set_scale(obj.get_scale() * 1.5)
+        # frames per second that the animation is played at
+        self.frames_per_sec=30
+
+    def update(self):
+        Sprite.update(self)   #updates sprite's physics
+        # an index for the image is calculated from the elapsed time of this
+        # sprite and the frames per second.  This sets the index so the 
+        # correct image is displayed at the right time.
+        self.set_index(int(self.age() * self.frames_per_sec))
+
+        # returns false when the life span is up, so this sprite can be
+        # removed from it's set
+        return self.index[0] <= self.info.get_lifespan()
+        
+# Rock class
+class Asteroid(Sprite):
+    def __init__(self, pos=None, size=3):
+        self.size = size
+        self.destroyed = False
+        # asteroid is created with random speeds, starting velocities,
+        # position, etc...
+        speed = random.randrange(20,60)
+        ang = random.randrange(0,62) / 10.0 
+        vel = (speed * math.cos(ang), speed * math.sin(ang))
+        if not pos:
+            pos = (random.randrange(0, WIDTH), random.randrange(0, HEIGHT))
+        ang_vel = random.randrange(2,6)/10.0 * [1, -1][random.randrange(0,2)]
+        ang = random.randrange(0,62) / 10.0
+        Sprite.__init__(self, pos, vel, ang, ang_vel, asteroid_image, asteroid_info)
+        # if a size is provided, set the scaling factor for the sprite
+        self.set_scale([.25, .4, .65, 1][size])
+
+    # in the extended mode for this came, asteroids are split into smaller pieces
+    # rather than being instantly destroyed.  This is the function that
+    # does the splitting
+    def split(self, sz):
+        r_list = []
+        for r in [ [], [0, 0], [1, 1], [2, 2, 1] ][sz]:
+            if random.randrange(0,10) > 8:
+                r_list.extend(self.split(r))
+            else:
+                r_list.append(r)
+        return r_list
+
+    # detect collisions with this asteroid and other objects
+    def collision(self, other):
+        global new_rocks, explosions, score
+        if self.dist(other) < self.get_radius() + other.get_radius():
+            self.destroyed = True
+            # explode
+            explosions.add(Explosion(self))
+            # spawn smaller asteriods
+            if mode != 'class':
+                for size in self.split(self.size):
+                    new_rocks.add(Asteroid(self.get_pos(), size))
+        # returns it's statis so it can be cleaned up if it is destroyed
+        return self.destroyed
+
+    # change volume based on size of the rock, big rock, big boom
+    def volume(self):
+        volume = (self.size + 1.0) / 4.0  # volume based on size
+        volume *= 0.6                     # compress those values to 60% of volume range
+        volume += 0.4                     # increase that volume to be in the top 60%
+        return volume * 0.8               # take the overal volume and compress it to the bottom 80%
+    
+    # return a score value based on the size of the rock
+    def score(self):
+        return (4 - self.size) * 5
+    
+    # update self, returning status (destroyed or not)
+    def update(self):
+        Sprite.update(self)
+        return not self.destroyed
+
+# Missile class
+
+class Missile(Sprite):
+    # speed of the missile in pixels/second, the lifespan of this sprite is
+    # set to 1.5seconds, which means that missiles travel about 600 pixels before
+    # disappearing
+    speed = 400
+    
+    def __init__(self, ship):
+        # calculate initial position, etc based on the ship.
+        s_r = ship.get_radius()
+        vec = ship.vector()
+        s_pos = ship.get_pos()
+        s_vel = ship.get_vel()
+        pos = (s_pos[0] + (vec[0] * s_r * 1.2), s_pos[1] + (vec[1] * s_r * 1.2))
+        vel = (vec[0] * Missile.speed + s_vel[0], vec[1] * Missile.speed + s_vel[1])
+        Sprite.__init__(self, pos, vel, 0, 0, missile_image, missile_info, missile_sound)
+        self.play_sound()
+        self.impact = False
+
+    def active(self):
+        return self.age() < self.info.get_lifespan() and not self.impact
+        
+    def update(self, rocks):
+        score = 0						
+        Sprite.update(self)
+        for rock in rocks:					# for each rock, test for collision
+            if rock.collision(self):		# get score from rock (based on size)
+                self.impact = True
+                score += rock.score()
+                break
+        return score						# return the score to the caller
+
+# Ship class
+class Ship(Sprite):
+    normal_friction = .008
+    low_friction = .0015
+
+    def __init__(self, side='right'):
+        self.power = 15
+        self.ang_speed = math.pi * 1.5
+        self.side  = { 'left' : 1, 'right' : -1 }[side]
+        Sprite.__init__(self, (0,0), (0, 0), 0, 0, ship_image, ship_info, ship_thrust_sound)
+        self.reset()
+        self.set_friction(True)
+        self.hud = Hud(self)
+
+    def reset_pos(self):
+        self.pos = ( WIDTH/2, HEIGHT/2 )
+        self.ang = math.pi/4
+        self.vel = (0, 0)
+    
+    def reset_state(self):
+        self.reset_pos()
+        self.thruster(False)
+        self.rotate(1,False)
+        self.state = 'normal'
+        self.missiles = set([])
+        self.timer = 0
+        
+    def reset(self):
+        self.reset_state()
+        self.lives = 3
+        self.score = 0
+        
+    def volume(self):   return 1      # when a ship blows up use maximum volume  
+    def get_hud(self):  return self.hud
+    def add_life(self): self.lives += 1
+    
+    # two friction modes, one easier to fly one more like space
+    def set_friction(self, mode):
+        self.friction = Ship.normal_friction if mode else Ship.low_friction
+    
+    # started this but didn't have the time to complete it.
+    def set_multiplayer(self, value):
+        self.multiplayer = value
+    
+    # this is bound to the key handlers, so pressed is true when the key
+    # is press, false when it is released.
+    def fire(self, pressed):
+        if pressed:
+            self.missiles.add(Missile(self))
+            self.score -= 1 if self.score > 0 else 0
+
+    # similar to above this is bound to the key handler, so when pressed 
+    # value is used to set the ang_vel.  direction is also passed in
+    # depending on if this is a left/right key press
+    def rotate(self, pressed, direction):
+        self.angle_vel = direction * (self.ang_speed if pressed else 0)
+
+    # bound to the space key, state of powered (same as pressed) determines
+    # if thrust is enabled, and sound played or stopped.
+    def thruster(self, powered):
+        self.set_index(1 if powered else 0)
+        self.thrust = powered
+        if self.thrust and self.sound:
+            self.play_sound()
+        else:
+            self.sound.pause()
+
+    # This is a ship that can be in multiple states the timer is used
+    # to set a timer for how long it is in that state
+    def set_state(self, state, timer):
+        self.state = state
+        self.timer = timer
+    
+    # draw the ship, missiles, hud, score, lives, everything related to the
+    # ship
+    def draw(self, canvas):
+        # draws the ship if not destroyed, if it is destroyed, it draws it
+        # every few frames on/off to make it flash
+        if self.state != 'destroyed' or int(self.timer * 5) % 2:
+            Sprite.draw(self, canvas)
+                
+        # if the ship is in shield mode or destroyed, draw the ship with a 
+        # blue halo.
+        if self.state == 'shield' or self.state == 'destroyed':
+            shield_factor = 1.4
+            if self.state == 'shield' and self.timer < 0.7:
+                shield_factor *= self.timer
+            # if the shield is still visible draw it on/off every few frames
+            # to make it flash fast
+            if shield_factor > 0  and int (self.timer * 20) % 2:
+                canvas.draw_circle(self.pos, self.get_radius()*shield_factor, 3, "rgba(0,0,0,0)", "rgba(0,0,255,0.25)")
+                canvas.draw_circle(self.pos, self.get_radius()*shield_factor, 3, "rgba(0,0,200,0.4)", "rgba(0,0,0,0)")
+        
+        # iterate over missiles and draw them
+        for m in self.missiles:
+            m.draw(canvas)
+            
+        # draw the hud
+        self.hud.draw(canvas)
+
+        # ship stats  -- this section was going to draw little ships for lives
+        # and score on one side or the other (all the extra math), for a two
+        # player version.  not enough time...
+        draw_text(canvas, "Score: %d" % self.score, (WIDTH-10,52), 22, ('r' if self.side < 0 else 'l'))
+        n = 0
+        while n < self.lives:
+            size=self.info.get_size(.4)
+            offset = (size[0]-8) * n
+            if self.side < 0:
+                pos = (WIDTH - (5 + size[0]/2) - offset, size[1]/2+5)
+            else:
+                pos = (5 + size[0]/2 + offset, size[1]/2+5)
+            canvas.draw_image(self.image, self.info.get_center((0,0)), self.info.get_size(), pos, size, - math.pi/2)
+            n += 1
+
+        
+    def update(self, rocks):
+        global explosions
+
+        Sprite.update(self)  # update ships position speed, etc...
+        
+        # if the ship is operating normally, check for collisions with rocks
+        # and blow up accordingly
+        if self.state == 'normal':
+            for rock in rocks:
+                if rock.collision(self):
+                    self.set_state('destroyed', 4)
+                    explosions.add(Explosion(self))
+                    self.lives -= 1
+                    
+        # the ship is not operating normally
+        else:
+            # whatever mode it is in, if the time has run out, figure out what
+            # to do next
+            if self.timer <= 0:
+                if self.state == 'destroyed':
+                    # if the ship was destroyed, then make it alive again
+                    # with shields up, so we don't just die instantly again.
+                    if self.lives > 0:
+                        self.set_state('shield', 7)
+                        
+                    # if the ship is completely out of lives, then we are done
+                    # game over.
+                    else:
+                        self.set_state('annihilated', 0)
+                        game_over()
+                else:
+                    self.set_state('normal', 0)
+                    
+            # otherwise, count down the timer.
+            else:
+                self.timer -= self.delta()
+        
+        # update ships vector based when thrust is on
+        if self.thrust:
+            vec = self.vector()
+            self.vel = (self.vel[0] + (vec[0] * self.power), self.vel[1] + (vec[1] * self.power))
+
+        # update missiles, clean up, update ships score
+        expired_missiles = set([])
+        for missile in self.missiles:
+            self.score += missile.update(rocks)
+            if not missile.active():
+                expired_missiles.add(missile)
+        self.missiles = self.missiles.difference(expired_missiles)
+        
+        # update the hud
+        self.hud.update(rocks)
+
+# the Hud acts like a little targeting computer for the ship.  I don't know
+# if it adds anything to the game.  I was just playing around, and thought I'd
+# leave it in for fun
+class Hud(Timer):
+    def __init__(self, ship):
+        Timer.__init__(self)
+        self.ship = ship
+        self.track_range = 300
+        self.track_list = []
+        self.target_color = "#40FF40"
+        self.mark_color = "Green"
+        self.enabled = False
+
+    def set_enabled(self, value): self.enabled = value
+    def is_enabled(self): return self.enabled
+    
+    def to_s(self, name, tuple):   return "%s[%4.1f, %4.1f]" % (name, tuple[0], tuple[1])
+    def dist(self, a, b):          return math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2)
+    
+    # find distance from ship to aim point, use ship vector to find point
+    # at that location find distance from m to aim point if the distance
+    # is less than radius, we know we are correctly aimed.
+    def vector_to_point(self, canvas, p_aim, radius):
+        pos = self.ship.get_pos()
+        vec = self.ship.vector()
+        
+        d = self.dist(pos, p_aim)
+        m = (pos[0] + vec[0] * d, pos[1] + vec[1] * d)
+        r = self.dist(p_aim, m)
+
+        canvas.draw_line(pos, m, 2, self.mark_color)
+        canvas.draw_circle(m, 4, 2, self.target_color)
+        return radius >= r
+    
+    # the idea was to paint asteroids witha target that would show
+    # where to aim for a sure hit using the relative velocity of the ship
+    # and the asteroid, and the speed of the missile...  It sort of works.
+    def vector_aim(self, canvas, rock):
+        v1 = self.ship.get_vel()   # ship velocity
+        v2 = rock.get_vel()        # rock velocity
+        p1 = rock.get_pos()
+
+        rel_v = (v2[0] - v1[0], v2[1] - v1[1])  #relative velocity
+        
+        mag = self.ship.dist(rock) / Missile.speed * self.delta()
+        p2 = (p1[0]+v2[0], p1[1] + v2[1])
+        p3 = (p2[0] + rel_v[0] * mag, p2[1] + rel_v[1] * mag)
+
+        canvas.draw_line(p1, p2, 2, self.mark_color)
+        canvas.draw_line(p2, p3, 2, self.mark_color) 
+        canvas.draw_polygon([(p3[0]-3,p3[1]-3),(p3[0]-3,p3[1]+3),
+                             (p3[0]+3,p3[1]+3),(p3[0]+3,p3[1]-3)], 2, self.target_color)
+        return p3
+    
+    def update(self, rocks):
+        if self.enabled:
+            Timer.update(self)
+            self.track_list = [ rock for rock in rocks if self.ship.dist(rock) < self.track_range ]
+            sorted(self.track_list, key=lambda obj: self.ship.dist(obj))
+
+    def draw(self, canvas):
+        if self.enabled:
+            first_target = True
+            for rock in self.track_list:
+                p_aim = self.vector_aim(canvas, rock)
+                pos = rock.get_pos()
+                radius = rock.get_radius()
+                if first_target and self.vector_to_point(canvas, p_aim, radius * .6):
+                    canvas.draw_circle(rock.pos, rock.get_radius()*.6, 3, self.target_color)
+                    first_target = False
+                canvas.draw_circle(rock.pos, rock.get_radius()*.8, 2, self.mark_color)
+#        if self.delta() > 0:
+#            draw_text(canvas, "Frame Rate: %5.2f" % (1/self.delta()), (WIDTH -20, HEIGHT-10), 28, 'r')
+
+# operating modes:
+# class - this is how this game should be evaluated for the class
+# extended - provides some aditional features and a little different
+# game play
+mode_list = ['class', 'extended']
+def next_mode():
+    index = mode_list.index(mode)
+    return mode_list[(index + 1) % len(mode_list)]
+    
+def mode_btn_text(value=None):
+    if not value:
+        value = next_mode()
+    return "%s Mode" % value.capitalize()
+
+def mode_handler(new_mode=None):
+    global mode
+    mode = next_mode()
+    mode_label1.set_text("Current mode: %s" % mode.capitalize())
+    mode_btn.set_text(mode_btn_text())
+
+# hud on/off
+def hud_btn_text():
+    return "%s Hud" % ("Disable" if ship.get_hud().is_enabled() else "Enable")
+
+def hud_handler():
+    global hud_btn
+    hud = ship.get_hud()
+    hud.set_enabled(not hud.is_enabled())
+    hud_btn.set_text(hud_btn_text())
+
+# sound on/off
+def mute_btn_text():
+    return "Sound %s" % ("Mute" if mute else "On")
+
+def mute_handler():
+    global mute
+    mute = not mute
+    
+    for s in sounds:
+        s.set_mute(mute)
+        
+    mute_btn.set_text(mute_btn_text())
+
+# adjust the friction of the spaceship
+def friction_btn_text():
+    return "Friction %s" % ("Low" if friction else "Normal")
+
+def friction_handler():
+    global friction, friction_btn, ship
+    friction = not friction
+    ship.set_friction(friction)
+    friction_btn.set_text(friction_btn_text())
+
+# add/remove rocks - only works in "class mode"
+def inc_handler():
+    global n_asteroids
+    if n_asteroids < 25:
+        n_asteroids += 1    
+    
+def dec_handler():
+    global n_asteroids
+    if n_asteroids > 2:
+        n_asteroids -= 1
+    while len(rocks) > n_asteroids:
+        rocks.pop()
+
+# handle key presses:
+#
+# key bindings is a dictionary that maps the key value to a function
+# if a mapping is found the function is called with a "pressed" parameter
+# True meaning the key is press and False, the key was released.  I can
+# use the mapping to call methods on the ship to do things from the 
+# mapping.
+
+def key_down(key):
+    if not started:
+        return
+    try:
+        key_binding[key](True)
+    except KeyError:
+        pass
+
+def key_up(key):
+    if not started:
+        return
+    try:
+        key_binding[key](False)
+    except KeyError:
+        pass
+
+# handle resetting the game
+def game_over():
+    global started, rocks
+    started = False
+    soundtrack.pause()
+    rocks = set([])
+    
+def reset_game():
+    global score, started, rocks, n_asteroids, level
+    ship.reset()
+    level = 1
+    started = True
+    n_asteroids=2
+    rocks = set([])
+    add_rocks(n_asteroids)
+    soundtrack.rewind()
+    soundtrack.play()
+
+# mouseclick handlers that reset UI and conditions whether splash image is drawn
+def click(pos):
+    global started
+    center = [WIDTH / 2, HEIGHT / 2]
+    size = splash_info.get_size()
+    inwidth = (center[0] - size[0] / 2) < pos[0] < (center[0] + size[0] / 2)
+    inheight = (center[1] - size[1] / 2) < pos[1] < (center[1] + size[1] / 2)
+    if (not started) and inwidth and inheight:
+        reset_game()
+
+# add rocks to the game, make sure they aren't on top of the ship
+def add_rocks(n):
+    pos = None
+    while n > 0:
+        while not pos:
+            pos = (random.randrange(0, WIDTH), random.randrange(0, HEIGHT))
+            if ship.dist_to_pos(pos) < ship.get_radius() * 3:
+                pos = None
+        rocks.add(Asteroid(pos))
+        n -= 1
+        pos = None
+
+# draw text, position correctly based on justification (l, r, c)
+def draw_text(canvas, text, pos, size, justification = 'l', color="Green"):
+    width = frame.get_canvas_textwidth(text, size, 'sans-serif')
+    if justification == 'r':
+        pos = (pos[0] - width, pos[1])
+    elif justification == 'c':
+        pos = (pos[0] - width/2, pos[1])
+    canvas.draw_text(text, pos, size, color, 'sans-serif')
+
+# update the game
+def update():
+    global rocks, new_rocks, explosions, n_asteroids, level
+    
+    # update explosions, eliminate ones that have completed their animations
+    explosions = set([ explosion for explosion in explosions if explosion.update() ])
+
+    # if the game is started, update rocks, manage counts, levels, etc...
+    if started: 
+        # update rocks, remove destroyed ones
+        rocks = set([ rock for rock in rocks if rock.update() ])
+    
+        # if there are new_rocks, add them to the rocks set
+        if len(new_rocks) > 0:
+            rocks.update(new_rocks)
+            new_rocks = set([])
+        
+        # if in extended mode, update game play when all rocks are cleard
+        if mode != 'class' and len(rocks) == 0:    # cleared level
+            n_asteroids += 1
+            level += 1
+            if level % 2: # add a life
+                ship.add_life()
+            add_rocks(n_asteroids)
+
+    # update the ship
+    ship.update(rocks)
+
+    
+def draw(canvas):
+    global time_t
+
+    # animiate background
+    time_t += 1
+    wtime = (time_t / 4) % WIDTH
+    center = debris_info.get_center()
+    size = debris_info.get_size()
+    canvas.draw_image(nebula_image, nebula_info.get_center(), nebula_info.get_size(), [WIDTH / 2, HEIGHT / 2], [WIDTH, HEIGHT])
+    canvas.draw_image(debris_image, center, size, (wtime - WIDTH / 2, HEIGHT / 2), (WIDTH, HEIGHT))
+    canvas.draw_image(debris_image, center, size, (wtime + WIDTH / 2, HEIGHT / 2), (WIDTH, HEIGHT))
+
+    # draw rocks, ships, explosions on top
+    for rock in rocks: rock.draw(canvas)
+    ship.draw(canvas)
+    for explosion in explosions: explosion.draw(canvas)
+    
+    # update
+    update()
+
+    # draw splash screen if not started
+    flash_pos = [WIDTH/2, HEIGHT-5]
+    flash_font_size = 18
+    if not started:
+        flash_font_size=24
+        flash_pos[1] = HEIGHT/2-110
+        canvas.draw_image(splash_image, splash_info.get_center(), 
+                          splash_info.get_size(), [WIDTH / 2, HEIGHT / 2], 
+                          splash_info.get_size())
+    if mode != 'class':
+        draw_text(canvas, "please select 'class' mode for grading", flash_pos, flash_font_size, 'c', "orange")
+        draw_text(canvas, "Level: %d" % level, (WIDTH/2, 40), 28, 'c')
+ 
+            
+# timer handler that spawns a rock    
+def rock_spawner():
+    if started and mode == 'class' and len(rocks) < n_asteroids:
+        add_rocks(1)
+
+# initialize frame
+frame = simplegui.create_frame("Asteroids", WIDTH, HEIGHT)
+
+# initialize ship and two sprites
+ship = Ship()
+ship.set_friction(friction)
+new_rocks = set([])
+rocks = set([])
+n_asteroids=1
+explosions = set([])
+
+key_binding = {
+    simplegui.KEY_MAP['space'] : ship.fire,
+    simplegui.KEY_MAP['left']  : lambda pressed : ship.rotate(pressed, -1),
+    simplegui.KEY_MAP['right'] : lambda pressed : ship.rotate(pressed, 1),
+    simplegui.KEY_MAP['up']    : ship.thruster,
+}
+
+button_width = 150
+
+# register handlers
+frame.set_draw_handler(draw)
+
+mode_label1 = frame.add_label("Mode: %s" % mode.capitalize(), button_width)
+mode_btn = frame.add_button(mode_btn_text(), mode_handler, button_width)
+hud_btn = frame.add_button(hud_btn_text(), hud_handler, button_width)
+mute_btn = frame.add_button(mute_btn_text(), mute_handler, button_width)
+friction_btn = frame.add_button(friction_btn_text(), friction_handler, button_width)
+
+inc_btn = frame.add_button("More Asteroids", inc_handler, button_width)
+dec_btn = frame.add_button("Less Asteroids", dec_handler, button_width)
+
+frame.set_keydown_handler(key_down)
+frame.set_keyup_handler(key_up)
+frame.set_mouseclick_handler(click)
+timer = simplegui.create_timer(1000.0, rock_spawner)
+
+# get things rolling
+timer.start()
+frame.start()
